@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-400 Module 8 — Technical Debt & Code Quality</title>
+  <style>
+    :root{
+      --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+      --text:#e6edf3;--muted:#8b949e;
+      --green:#3fb950;--blue:#58a6ff;--red:#f85149;--yellow:#d29922;
+      --orange:#e3b341;--purple:#bc8cff;--pink:#f778ba;--teal:#39d353;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;}
+    body{background:var(--bg);color:var(--text);font-family:'Cascadia Code','Fira Code',monospace,system-ui;line-height:1.6;}
+    .header{background:var(--surface);border-bottom:1px solid var(--border);padding:20px;text-align:center;}
+    .header h1{font-size:28px;margin-bottom:8px;}
+    .header p{color:var(--muted);font-size:14px;}
+    .container{display:flex;height:calc(100vh - 100px);}
+    .tabs{width:200px;background:var(--surface2);border-right:1px solid var(--border);padding:0;display:flex;flex-direction:column;}
+    .tab-button{padding:12px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;text-align:left;font-size:13px;border-left:2px solid transparent;transition:.2s;}
+    .tab-button:hover{background:var(--surface);color:var(--text);}
+    .tab-button.active{background:var(--surface);color:var(--text);border-left-color:var(--blue);font-weight:bold;}
+    .content{flex:1;overflow-y:auto;padding:30px;}
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
+    .terminal{background:var(--surface2);border:1px solid var(--border);border-radius:6px;margin:15px 0;overflow:hidden;font-size:12px;}
+    .tbar{display:flex;align-items:center;background:var(--surface);padding:8px 12px;border-bottom:1px solid var(--border);}
+    .td{width:12px;height:12px;border-radius:50%;margin-right:8px;}
+    .tlabel{color:var(--muted);font-size:11px;margin-left:auto;}
+    .tbody{padding:12px;}
+    .tc{color:var(--text);margin:8px 0;word-break:break-all;}
+    .to{color:var(--muted);margin:4px 0 8px 16px;font-size:11px;}
+    .tok{color:var(--green);margin:4px 0 8px 16px;font-weight:bold;}
+    .twarn{color:var(--yellow);margin:4px 0 8px 16px;}
+    .terr{color:var(--red);margin:4px 0 8px 16px;font-weight:bold;}
+    .callout{display:flex;align-items:center;gap:12px;padding:12px;border-left:4px solid;border-radius:4px;margin:15px 0;background:var(--surface2);}
+    .callout.info{border-color:var(--blue);background:rgba(88,166,255,.1);}
+    .callout.warn{border-color:var(--yellow);background:rgba(210,153,34,.1);}
+    .callout.success{border-color:var(--green);background:rgba(63,185,80,.1);}
+    .callout.danger{border-color:var(--red);background:rgba(248,81,73,.1);}
+    .callout.tip{border-color:var(--purple);background:rgba(188,140,255,.1);}
+    .ci{font-size:18px;flex-shrink:0;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin:15px 0;}
+    .card{background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;}
+    .card h3{color:var(--blue);margin-bottom:8px;font-size:14px;}
+    .card p{font-size:12px;color:var(--muted);margin-bottom:8px;}
+    h2{color:var(--blue);margin-top:20px;margin-bottom:12px;font-size:18px;}
+    h3{color:var(--text);margin-top:15px;margin-bottom:8px;font-size:15px;}
+    h4{color:var(--muted);margin-top:10px;margin-bottom:6px;font-size:13px;}
+    p{margin-bottom:10px;font-size:13px;}
+    ul,ol{margin:10px 0 10px 20px;font-size:13px;}
+    li{margin:5px 0;}
+    a{color:var(--blue);text-decoration:none;}
+    a:hover{text-decoration:underline;}
+    .quadrant-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0;}
+    .quadrant{background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;cursor:pointer;transition:.2s;}
+    .quadrant:hover{border-color:var(--blue);box-shadow:0 0 10px rgba(88,166,255,.2);}
+    .quadrant.selected{border-color:var(--blue);background:rgba(88,166,255,.1);}
+    .quadrant h3{margin-top:0;}
+    .quality-gate{background:var(--surface2);border:1px solid var(--border);padding:20px;border-radius:4px;margin:15px 0;}
+    .quality-metric{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+    .quality-metric:last-child{border-bottom:none;}
+    .metric-name{flex:1;}
+    .metric-value{font-weight:bold;margin-right:10px;}
+    .metric-status{width:60px;text-align:right;}
+    .pass{color:var(--green);}
+    .fail{color:var(--red);}
+    .warn{color:var(--yellow);}
+    .code-example{background:var(--bg);border:1px solid var(--border);padding:12px;border-radius:4px;margin:15px 0;font-size:12px;overflow-x:auto;}
+    .covered{background:rgba(63,185,80,.15);color:var(--green);}
+    .uncovered{background:rgba(248,81,73,.15);color:var(--red);}
+    .partial{background:rgba(210,153,34,.15);color:var(--yellow);}
+    .button-group{display:flex;gap:10px;margin:15px 0;flex-wrap:wrap;}
+    .btn{padding:8px 16px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;border-radius:4px;font-size:12px;transition:.2s;}
+    .btn:hover{background:var(--surface2);border-color:var(--blue);}
+    .btn.primary{background:var(--blue);border-color:var(--blue);}
+    .matrix-2x2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0;}
+    .matrix-cell{background:var(--surface2);border:1px solid var(--border);padding:15px;text-align:center;border-radius:4px;cursor:grab;min-height:80px;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+    .matrix-cell.dragging{border-color:var(--blue);box-shadow:0 0 15px rgba(88,166,255,.3);}
+    .matrix-title{color:var(--muted);font-size:11px;margin-bottom:5px;}
+    .matrix-item{background:var(--surface);border:1px solid var(--border);padding:8px 12px;border-radius:3px;margin:3px;font-size:11px;cursor:pointer;}
+    .chart-bar{display:flex;align-items:center;margin:10px 0;gap:10px;}
+    .chart-bar-label{width:100px;font-size:12px;}
+    .chart-bar-track{flex:1;background:var(--surface);border:1px solid var(--border);height:20px;border-radius:3px;overflow:hidden;}
+    .chart-bar-fill{height:100%;transition:width .5s;}
+    .chart-bar-value{width:50px;text-align:right;font-size:12px;}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin:15px 0;}
+    table th{background:var(--surface);border:1px solid var(--border);padding:8px;text-align:left;font-weight:bold;}
+    table td{border:1px solid var(--border);padding:8px;}
+    table tr:nth-child(even){background:var(--surface2);}
+    .rating{display:inline-block;padding:4px 8px;border-radius:3px;font-weight:bold;font-size:11px;}
+    .rating-a{background:rgba(63,185,80,.2);color:var(--green);}
+    .rating-b{background:rgba(88,166,255,.2);color:var(--blue);}
+    .rating-c{background:rgba(210,153,34,.2);color:var(--yellow);}
+    .rating-d{background:rgba(248,81,73,.2);color:var(--red);}
+    .rating-e{background:rgba(248,81,73,.3);color:var(--red);}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>AZ-400 Module 8 — Technical Debt & Code Quality</h1>
+    <p>Master SonarQube, code coverage, and DevOps quality metrics</p>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-button active" onclick="switchTab(0)">Technical Debt</button>
+      <button class="tab-button" onclick="switchTab(1)">SonarQube QG</button>
+      <button class="tab-button" onclick="switchTab(2)">Code Coverage</button>
+      <button class="tab-button" onclick="switchTab(3)">Azure DevOps Integration</button>
+      <button class="tab-button" onclick="switchTab(4)">Measuring & Reducing</button>
+      <button class="tab-button" onclick="switchTab(5)">Exam Tips 🎯</button>
+    </div>
+
+    <div class="content">
+      <!-- TAB 1: Technical Debt -->
+      <div class="tab-panel active">
+        <h2>Understanding Technical Debt</h2>
+        <p>The metaphor: borrowing time now by taking shortcuts, paying interest later through slower velocity and harder maintenance.</p>
+
+        <h3>Fowler's Technical Debt Quadrant</h3>
+        <p>Click each quadrant to understand the trade-offs:</p>
+
+        <div class="quadrant-grid">
+          <div class="quadrant" onclick="showQuadrant(0)">
+            <h3>🚀 Reckless/Deliberate</h3>
+            <p style="font-size:12px;margin:0;">Strategy: Speed over quality</p>
+          </div>
+          <div class="quadrant" onclick="showQuadrant(1)">
+            <h3>🎯 Reckless/Inadvertent</h3>
+            <p style="font-size:12px;margin:0;">Accidental poor design</p>
+          </div>
+          <div class="quadrant" onclick="showQuadrant(2)">
+            <h3>⏰ Prudent/Deliberate</h3>
+            <p style="font-size:12px;margin:0;">Calculated short-term debt</p>
+          </div>
+          <div class="quadrant" onclick="showQuadrant(3)">
+            <h3>🧩 Prudent/Inadvertent</h3>
+            <p style="font-size:12px;margin:0;">Learning = better design later</p>
+          </div>
+        </div>
+
+        <div id="quadrant-details" style="background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;margin:15px 0;">
+          <p style="color:var(--muted);">Select a quadrant above to see details</p>
+        </div>
+
+        <h3>Debt Accumulation Impact on Velocity</h3>
+        <div style="background:var(--surface2);border:1px solid var(--border);padding:20px;border-radius:4px;margin:15px 0;position:relative;height:200px;">
+          <svg viewBox="0 0 600 200" style="width:100%;height:100%;">
+            <!-- Axes -->
+            <line x1="50" y1="150" x2="550" y2="150" stroke="var(--border)" stroke-width="2"/>
+            <line x1="50" y1="150" x2="50" y2="30" stroke="var(--border)" stroke-width="2"/>
+            <!-- Velocity line (decreasing) -->
+            <polyline points="70,80 150,75 230,70 310,60 390,40 470,25 550,15" stroke="var(--red)" stroke-width="3" fill="none"/>
+            <!-- Debt line (increasing) -->
+            <polyline points="70,130 150,125 230,115 310,100 390,75 470,50 550,30" stroke="var(--yellow)" stroke-width="3" fill="none"/>
+            <!-- Labels -->
+            <text x="560" y="80" font-size="12" fill="var(--red)">Velocity</text>
+            <text x="560" y="130" font-size="12" fill="var(--yellow)">Debt</text>
+            <text x="300" y="175" font-size="11" fill="var(--muted)" text-anchor="middle">Time →</text>
+          </svg>
+          <p style="position:absolute;bottom:10px;left:10px;color:var(--muted);font-size:11px;">As debt accumulates, development velocity decreases</p>
+        </div>
+
+        <h3>Types of Technical Debt</h3>
+        <div class="grid">
+          <div class="card">
+            <h3>Code Debt</h3>
+            <p>Messy implementation, duplicated logic, poor abstractions, tight coupling</p>
+            <p style="color:var(--red);font-size:11px;margin-top:10px;">Impact: Hard to modify safely</p>
+          </div>
+          <div class="card">
+            <h3>Test Debt</h3>
+            <p>Low coverage, no unit tests, brittle E2E tests, missing edge cases</p>
+            <p style="color:var(--red);font-size:11px;margin-top:10px;">Impact: Regressions hide in production</p>
+          </div>
+          <div class="card">
+            <h3>Documentation Debt</h3>
+            <p>Outdated README, missing API docs, no architecture diagrams, no runbook</p>
+            <p style="color:var(--red);font-size:11px;margin-top:10px;">Impact: Onboarding takes weeks</p>
+          </div>
+          <div class="card">
+            <h3>Architecture Debt</h3>
+            <p>Monolithic core, poor service boundaries, no clear data flow</p>
+            <p style="color:var(--red);font-size:11px;margin-top:10px;">Impact: Cannot scale independently</p>
+          </div>
+          <div class="card">
+            <h3>Dependency Debt</h3>
+            <p>Outdated libraries, deprecated APIs, security vulnerabilities</p>
+            <p style="color:var(--red);font-size:11px;margin-top:10px;">Impact: Security risk, incompatibility</p>
+          </div>
+          <div class="card">
+            <h3>Infrastructure Debt</h3>
+            <p>Manual deployments, no CI/CD, inconsistent environments</p>
+            <p style="color:var(--red);font-size:11px;margin-top:10px;">Impact: Unreliable deployments</p>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <span class="ci">⚠️</span>
+          <span><strong>Balance Required:</strong> Some debt is necessary for speed, but unchecked debt kills productivity. The goal is conscious debt management, not zero debt.</span>
+        </div>
+      </div>
+
+      <!-- TAB 2: SonarQube Quality Gates -->
+      <div class="tab-panel">
+        <h2>SonarQube Quality Gates</h2>
+        <p>SonarQube measures code quality across multiple dimensions. Quality Gates enforce passing thresholds.</p>
+
+        <h3>What SonarQube Measures</h3>
+        <table>
+          <tr>
+            <th>Metric</th>
+            <th>Description</th>
+            <th>Importance</th>
+          </tr>
+          <tr>
+            <td>Bugs</td>
+            <td>Logic errors, null dereferences, uncaught exceptions</td>
+            <td style="color:var(--red);">Critical</td>
+          </tr>
+          <tr>
+            <td>Vulnerabilities</td>
+            <td>Security flaws: SQL injection, XSS, hardcoded secrets</td>
+            <td style="color:var(--red);">Critical</td>
+          </tr>
+          <tr>
+            <td>Security Hotspots</td>
+            <td>Sensitive code that needs review: cryptography, auth</td>
+            <td style="color:var(--yellow);">Important</td>
+          </tr>
+          <tr>
+            <td>Code Smells</td>
+            <td>Style issues, complexity, duplication, conventions</td>
+            <td style="color:var(--yellow);">Important</td>
+          </tr>
+          <tr>
+            <td>Coverage</td>
+            <td>Percentage of code executed by tests</td>
+            <td style="color:var(--blue);">Moderate</td>
+          </tr>
+          <tr>
+            <td>Duplications</td>
+            <td>Copy-pasted code blocks (should be abstracted)</td>
+            <td style="color:var(--blue);">Moderate</td>
+          </tr>
+        </table>
+
+        <h3>Interactive Quality Gate Simulation</h3>
+        <div class="button-group">
+          <button class="btn" onclick="initQualityGate()">Run Analysis</button>
+          <button class="btn" onclick="simulatefixes()">Simulate Fixes</button>
+        </div>
+
+        <div id="quality-gate-before" class="quality-gate">
+          <h4 style="margin-top:0;text-align:center;margin-bottom:15px;">BEFORE Analysis</h4>
+          <div class="quality-metric">
+            <div class="metric-name">Bugs</div>
+            <div class="metric-value" style="color:var(--red);">47</div>
+            <div class="metric-status fail">FAIL</div>
+          </div>
+          <div class="quality-metric">
+            <div class="metric-name">Vulnerabilities</div>
+            <div class="metric-value" style="color:var(--red);">12</div>
+            <div class="metric-status fail">FAIL</div>
+          </div>
+          <div class="quality-metric">
+            <div class="metric-name">Code Smells</div>
+            <div class="metric-value" style="color:var(--yellow);">340</div>
+            <div class="metric-status fail">FAIL</div>
+          </div>
+          <div class="quality-metric">
+            <div class="metric-name">Coverage</div>
+            <div class="metric-value">23%</div>
+            <div class="metric-status fail">FAIL</div>
+          </div>
+          <div class="quality-metric">
+            <div class="metric-name">Duplications</div>
+            <div class="metric-value">18%</div>
+            <div class="metric-status fail">FAIL</div>
+          </div>
+          <div class="quality-metric">
+            <div class="metric-name">Complexity</div>
+            <div class="metric-value">8.2/10</div>
+            <div class="metric-status fail">FAIL</div>
+          </div>
+          <div style="text-align:center;padding-top:15px;border-top:1px solid var(--border);margin-top:15px;">
+            <p style="color:var(--red);font-weight:bold;font-size:16px;">Quality Gate: FAILED ❌</p>
+            <p style="color:var(--muted);font-size:12px;">6 conditions failed</p>
+          </div>
+        </div>
+
+        <div id="quality-gate-after" style="display:none;" class="quality-gate">
+          <h4 style="margin-top:0;text-align:center;margin-bottom:15px;">AFTER Analysis</h4>
+          <div class="quality-metric">
+            <div class="metric-name">Bugs</div>
+            <div class="metric-value" style="color:var(--green);">3</div>
+            <div class="metric-status pass">PASS</div>
+          </div>
+          <div class="quality-metric">
+            <div class="metric-name">Vulnerabilities</div>
+            <div class="metric-value" style="color:var(--green);">2</div>
+            <div class="metric-status pass">PASS</div>
+          </div>
+          <div class="quality-metric">
+            <div class="metric-name">Code Smells</div>
+            <div class="metric-value" style="color:var(--green);">89</div>
+            <div class="metric-status pass">PASS</div>
+          </div>
+          <div class="quality-metric">
+            <div class="metric-name">Coverage</div>
+            <div class="metric-value" style="color:var(--green);">68%</div>
+            <div class="metric-status pass">PASS</div>
+          </div>
+          <div class="quality-metric">
+            <div class="metric-name">Duplications</div>
+            <div class="metric-value" style="color:var(--green);">4%</div>
+            <div class="metric-status pass">PASS</div>
+          </div>
+          <div class="quality-metric">
+            <div class="metric-name">Complexity</div>
+            <div class="metric-value" style="color:var(--green);">4.1/10</div>
+            <div class="metric-status pass">PASS</div>
+          </div>
+          <div style="text-align:center;padding-top:15px;border-top:1px solid var(--border);margin-top:15px;">
+            <p style="color:var(--green);font-weight:bold;font-size:16px;">Quality Gate: PASSED ✅</p>
+            <p style="color:var(--muted);font-size:12px;">All conditions met</p>
+          </div>
+        </div>
+
+        <h3>Reliability, Security, Maintainability Ratings</h3>
+        <p>SonarQube converts metrics into letter grades:</p>
+        <table>
+          <tr>
+            <th>Rating</th>
+            <th>Criteria</th>
+            <th>Example</th>
+          </tr>
+          <tr>
+            <td><span class="rating rating-a">A</span></td>
+            <td>No issues</td>
+            <td>0 bugs, critical severity</td>
+          </tr>
+          <tr>
+            <td><span class="rating rating-b">B</span></td>
+            <td>Minor issues</td>
+            <td>0 critical bugs, few minors</td>
+          </tr>
+          <tr>
+            <td><span class="rating rating-c">C</span></td>
+            <td>Some issues</td>
+            <td>1-2 critical or multiple major</td>
+          </tr>
+          <tr>
+            <td><span class="rating rating-d">D</span></td>
+            <td>Many issues</td>
+            <td>Multiple critical/major</td>
+          </tr>
+          <tr>
+            <td><span class="rating rating-e">E</span></td>
+            <td>Failing</td>
+            <td>Multiple critical bugs/vulns</td>
+          </tr>
+        </table>
+
+        <h3>New Code vs Overall Code</h3>
+        <div class="callout info">
+          <span class="ci">ℹ️</span>
+          <span><strong>Clean as You Code:</strong> SonarQube tracks new code separately. Focus on keeping NEW code clean (100% coverage goal) while refactoring legacy code gradually.</span>
+        </div>
+
+        <div class="code-example">
+          Quality Gate: New Code<br>
+          - Coverage > 80% ✓<br>
+          - Duplications < 3% ✓<br>
+          - Code Smells = 0 ✓<br>
+          - Hotspots reviewed ✓<br>
+          <br>
+          Quality Gate: Overall<br>
+          - Coverage > 50% ✓ (legacy code drags this down)<br>
+          - Bugs < 50 ✓<br>
+        </div>
+      </div>
+
+      <!-- TAB 3: Code Coverage -->
+      <div class="tab-panel">
+        <h2>Code Coverage Deep Dive</h2>
+        <p>Coverage measures what percentage of code is executed by tests. But not all coverage is equal!</p>
+
+        <h3>Types of Coverage</h3>
+        <table>
+          <tr>
+            <th>Type</th>
+            <th>What It Measures</th>
+            <th>Example</th>
+          </tr>
+          <tr>
+            <td><strong>Line Coverage</strong></td>
+            <td>Percentage of lines executed</td>
+            <td>80% = 8 of 10 lines hit by tests</td>
+          </tr>
+          <tr>
+            <td><strong>Branch Coverage</strong></td>
+            <td>All if/else paths taken</td>
+            <td>if (x > 0) → test both true AND false</td>
+          </tr>
+          <tr>
+            <td><strong>Function Coverage</strong></td>
+            <td>All functions/methods called</td>
+            <td>Called at least once in tests</td>
+          </tr>
+          <tr>
+            <td><strong>Statement Coverage</strong></td>
+            <td>Each statement executed</td>
+            <td>Very similar to line coverage</td>
+          </tr>
+        </table>
+
+        <h3>Branch Coverage Matters Most</h3>
+        <p>Example: 100% line coverage but 0% branch coverage (DANGER!)</p>
+        <div class="code-example">
+          function processUser(user) {<br>
+          &nbsp;&nbsp;if (user.age >= 18) {  <span class="covered">// Line tested</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;return "Adult";<span class="covered">// Line tested</span><br>
+          &nbsp;&nbsp;}<br>
+          &nbsp;&nbsp;return "Minor";<span class="uncovered">// Line NOT tested</span><br>
+          }<br>
+          <br>
+          Test: processUser({age: 20})<br>
+          <span class="covered">✓ Line coverage: 80% (4/5 lines)</span><br>
+          <span class="uncovered">✗ Branch coverage: 50% (only tested age >= 18, not < 18)</span>
+        </div>
+
+        <h3>Coverage Realistic Targets</h3>
+        <div class="grid">
+          <div class="card">
+            <h3>Unit Tests</h3>
+            <p>70-85% coverage realistic</p>
+            <p>Fast, isolated, comprehensive</p>
+            <p style="color:var(--green);font-size:11px;margin-top:8px;">Goal: Branch coverage ≥80%</p>
+          </div>
+          <div class="card">
+            <h3>Integration Tests</h3>
+            <p>40-60% coverage realistic</p>
+            <p>Slower, broader, fewer paths</p>
+            <p style="color:var(--blue);font-size:11px;margin-top:8px;">Goal: Key flows covered</p>
+          </div>
+          <div class="card">
+            <h3>E2E Tests</h3>
+            <p>20-40% coverage realistic</p>
+            <p>Slow, full stack, critical user journeys</p>
+            <p style="color:var(--yellow);font-size:11px;margin-top:8px;">Goal: Happy path + errors</p>
+          </div>
+          <div class="card">
+            <h3>Combined</h3>
+            <p>Aim for 70%+ overall</p>
+            <p>Unit + Integration + E2E pyramid</p>
+            <p style="color:var(--teal);font-size:11px;margin-top:8px;">Goal: Confidence in quality</p>
+          </div>
+        </div>
+
+        <h3>Mutation Testing Concept</h3>
+        <p>Coverage alone is misleading. Mutation testing asks: "Are your tests actually testing?"</p>
+        <div class="code-example">
+          Original: if (x > 5) { ... }<br>
+          Mutation 1: if (x >= 5) { ... }  ← Test catches? (Good!)<br>
+          Mutation 2: if (x > 4) { ... }  ← Test catches? (Good!)<br>
+          Mutation 3: if (true) { ... }   ← Test catches? (Bad! Test is weak)<br>
+          <br>
+          <span style="color:var(--green);">✓ High mutation score = tests are thorough</span><br>
+          <span style="color:var(--red);">✗ Low mutation score = tests are superficial</span>
+        </div>
+
+        <h3>Running Coverage Reports</h3>
+        <div class="terminal">
+          <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — coverage</span></div>
+          <div class="tbody">
+            <div class="tc">$ npm test -- --coverage</div>
+            <div class="to">PASS  __tests__/user.test.js</div>
+            <div class="to">  User service</div>
+            <div class="to">    ✓ creates user with valid data</div>
+            <div class="to">    ✓ rejects invalid email</div>
+            <div class="to">    ✓ hashes password</div>
+            <div class="to"></div>
+            <div class="to">---------- Coverage summary ----------</div>
+            <div class="to">Statements   : 68.5% ( 274/400 )</div>
+            <div class="to">Branches     : 52.3% ( 104/200 )</div>
+            <div class="to">Functions    : 71.2% ( 57/80 )</div>
+            <div class="to">Lines        : 68.9% ( 276/401 )</div>
+            <div class="tok">✓ Coverage report written to ./coverage</div>
+          </div>
+        </div>
+
+        <h3>Tools by Language</h3>
+        <table>
+          <tr><th>Language</th><th>Tool</th><th>Format</th></tr>
+          <tr><td>JavaScript/TypeScript</td><td>Jest, NYC</td><td>HTML, LCOV, JSON</td></tr>
+          <tr><td>Python</td><td>pytest-cov, Coverage.py</td><td>HTML, XML, JSON</td></tr>
+          <tr><td>.NET</td><td>dotnet-coverage, OpenCover</td><td>XML, HTML</td></tr>
+          <tr><td>Java</td><td>JaCoCo, Cobertura</td><td>XML, HTML</td></tr>
+        </table>
+      </div>
+
+      <!-- TAB 4: Azure DevOps Integration -->
+      <div class="tab-panel">
+        <h2>Azure DevOps Code Quality Integration</h2>
+        <p>Embed code quality gates into your CI/CD pipeline to prevent low-quality code from reaching production.</p>
+
+        <h3>SonarQube in azure-pipelines.yml</h3>
+        <div class="code-example">
+          trigger:<br>
+          &nbsp;&nbsp;- main<br>
+          <br>
+          pool:<br>
+          &nbsp;&nbsp;vmImage: 'ubuntu-latest'<br>
+          <br>
+          steps:<br>
+          &nbsp;&nbsp;- task: SonarQubePrepare@5<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;inputs:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SonarQube: 'SQ-Production'<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scannerMode: 'MSBuild'<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;projectKey: 'myproject'<br>
+          <br>
+          &nbsp;&nbsp;- task: SonarQubeAnalyze@5<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;inputs:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;jdkversion: 'JAVA_HOME'<br>
+          <br>
+          &nbsp;&nbsp;- task: SonarQubePublish@5<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;inputs:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pollingTimeoutSec: '300'<br>
+          <br>
+          &nbsp;&nbsp;- task: PublishCodeCoverageResults@1<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;inputs:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;codeCoverageTool: 'cobertura'<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;summaryFileLocation: '**/coverage.xml'
+        </div>
+
+        <h3>Pull Request Decoration</h3>
+        <p>SonarQube automatically comments on PRs with quality issues:</p>
+        <div style="background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;margin:15px 0;font-size:12px;">
+          <div style="color:var(--red);font-weight:bold;margin-bottom:10px;">❌ SonarQube Quality Gate Failed</div>
+          <p>Code Quality Gate failed after this analysis. Please address the issues below:</p>
+          <ul style="margin:10px 0 0 20px;">
+            <li><strong>5 new bugs introduced</strong> (file.ts:42, file.ts:127, ...)</li>
+            <li><strong>2 new vulnerabilities</strong> (SQL injection risk in query builder)</li>
+            <li><strong>Coverage dropped 8%</strong> (68% → 60%)</li>
+          </ul>
+          <p style="margin-top:10px;color:var(--muted);">Review in <a href="#">SonarQube Dashboard</a></p>
+        </div>
+
+        <h3>Quality Gate as Pipeline Gate</h3>
+        <p>Block merge if quality gate fails:</p>
+        <div class="code-example">
+          - task: SonarQubePublish@5<br>
+          &nbsp;&nbsp;inputs:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;pollingTimeoutSec: '300'<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">failWhenQualityGateFails: true  ← Fails pipeline</span><br>
+          <br>
+          <span style="color:var(--red);">If QG fails → Pipeline fails → Cannot merge</span>
+        </div>
+
+        <h3>Code Coverage Task</h3>
+        <div class="terminal">
+          <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — test & publish</span></div>
+          <div class="tbody">
+            <div class="tc">- task: PublishCodeCoverageResults@1</div>
+            <div class="to">  inputs:</div>
+            <div class="to">    codeCoverageTool: 'cobertura'</div>
+            <div class="to">    summaryFileLocation: '**/coverage.xml'</div>
+            <div class="to">    reportDirectory: '$(System.DefaultWorkingDirectory)/coverage'</div>
+            <div class="tok">✓ Coverage report published to pipeline summary</div>
+            <div class="to">✓ Visible in Test tab of pipeline run</div>
+          </div>
+        </div>
+
+        <h3>Dashboard Widget: Quality Trends</h3>
+        <div style="background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;margin:15px 0;">
+          <h4 style="margin-top:0;margin-bottom:10px;">Code Quality Trend (Last 30 days)</h4>
+          <div class="chart-bar">
+            <div class="chart-bar-label">Bugs</div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width:25%;background:var(--red);">47 → 12</div>
+            </div>
+            <div class="chart-bar-value">↓ 75%</div>
+          </div>
+          <div class="chart-bar">
+            <div class="chart-bar-label">Coverage</div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width:68%;background:var(--green);">23% → 68%</div>
+            </div>
+            <div class="chart-bar-value">↑ 45%</div>
+          </div>
+          <div class="chart-bar">
+            <div class="chart-bar-label">Code Smells</div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width:26%;background:var(--yellow);">340 → 89</div>
+            </div>
+            <div class="chart-bar-value">↓ 74%</div>
+          </div>
+          <div class="chart-bar">
+            <div class="chart-bar-label">Vulnerabilities</div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width:17%;background:var(--red);">12 → 2</div>
+            </div>
+            <div class="chart-bar-value">↓ 83%</div>
+          </div>
+        </div>
+
+        <h3>Azure Test Plans Integration</h3>
+        <div class="callout info">
+          <span class="ci">ℹ️</span>
+          <span><strong>Manual Testing:</strong> Link manual test cases in Test Plans. Track pass rate alongside automated coverage to measure overall quality.</span>
+        </div>
+      </div>
+
+      <!-- TAB 5: Measuring & Reducing Debt -->
+      <div class="tab-panel">
+        <h2>Measuring & Reducing Technical Debt</h2>
+        <p>Quantify debt, prioritize reduction, and build a culture of quality.</p>
+
+        <h3>SQALE Method: Measuring Debt in Hours</h3>
+        <p>SQALE converts issues into estimated remediation time:</p>
+        <table>
+          <tr><th>Issue Type</th><th>Severity</th><th>Estimated Effort</th></tr>
+          <tr><td>Code Smell</td><td>Minor</td><td>5-10 minutes</td></tr>
+          <tr><td>Duplicated Code</td><td>Minor</td><td>15-30 minutes</td></tr>
+          <tr><td>High Complexity</td><td>Major</td><td>1-2 hours</td></tr>
+          <tr><td>Bug (Logic Error)</td><td>Critical</td><td>2-4 hours</td></tr>
+          <tr><td>Vulnerability</td><td>Critical</td><td>2-3 hours</td></tr>
+          <tr><td>Architecture Issue</td><td>Blocker</td><td>8-40 hours</td></tr>
+        </table>
+
+        <p style="margin-top:15px;">Example: 340 code smells × 10 min avg = 57 hours of debt</p>
+
+        <h3>Technical Debt Ratio</h3>
+        <div class="code-example">
+          Debt Ratio = Remediation Cost / Codebase Size<br>
+          <br>
+          Example:<br>
+          - 57 hours debt / 1,200 hours codebase = 4.8% debt ratio<br>
+          <br>
+          <span style="color:var(--green);">0-5%: Healthy (manageable)</span><br>
+          <span style="color:var(--yellow);">5-10%: Concerning (needs attention)</span><br>
+          <span style="color:var(--red);">10%+: Critical (impacting velocity)</span>
+        </div>
+
+        <h3>Impact vs Effort: Prioritization Matrix</h3>
+        <p>Click debt items to place them on the matrix:</p>
+        <div class="button-group">
+          <button class="btn" onclick="addDebtItem('Unit Tests', 'high', 'medium')">Add "Unit Tests"</button>
+          <button class="btn" onclick="addDebtItem('Refactor Parser', 'medium', 'high')">Add "Parser"</button>
+          <button class="btn" onclick="addDebtItem('Update Docs', 'low', 'low')">Add "Docs"</button>
+          <button class="btn" onclick="clearMatrix()">Clear</button>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;margin:15px 0;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;min-height:300px;">
+            <div style="border-right:2px solid var(--border);position:relative;">
+              <div style="position:absolute;top:0;right:0;width:50%;height:100%;background:rgba(63,185,80,.05);border-left:2px dashed var(--green);"></div>
+              <div style="position:absolute;top:50%;right:0;width:100%;height:50%;background:rgba(248,81,73,.05);border-top:2px dashed var(--red);"></div>
+              <h4 style="position:absolute;top:8%;right:8%;">Quick wins</h4>
+              <h4 style="position:absolute;bottom:8%;right:5%;">Hard but valuable</h4>
+              <div id="matrix-topleft" style="position:absolute;top:10%;left:10%;width:30%;"></div>
+              <div id="matrix-topright" style="position:absolute;top:10%;right:10%;width:30%;"></div>
+              <p style="position:absolute;bottom:0;left:0;font-size:11px;color:var(--muted);">Effort →</p>
+            </div>
+            <div style="position:relative;">
+              <div style="position:absolute;top:0;left:0;width:50%;height:100%;background:rgba(248,81,73,.05);border-right:2px dashed var(--red);"></div>
+              <div style="position:absolute;bottom:0;left:0;width:50%;height:50%;background:rgba(210,153,34,.05);border-top:2px dashed var(--yellow);"></div>
+              <h4 style="position:absolute;top:8%;left:8%;">Not worth it</h4>
+              <h4 style="position:absolute;bottom:8%;left:8%;">Reconsider</h4>
+              <div id="matrix-bottomleft" style="position:absolute;bottom:10%;left:10%;width:30%;"></div>
+              <div id="matrix-bottomright" style="position:absolute;bottom:10%;right:10%;width:30%;"></div>
+              <p style="position:absolute;right:0;top:50%;font-size:11px;color:var(--muted);writing-mode:vertical-rl;text-orientation:mixed;">Impact ↑</p>
+            </div>
+          </div>
+        </div>
+
+        <h3>Strategies for Reducing Debt</h3>
+        <div class="grid">
+          <div class="card">
+            <h3>Boy Scout Rule</h3>
+            <p>"Leave the code cleaner than you found it"</p>
+            <p style="font-size:12px;margin-top:10px;">On every commit, fix one minor smell. Over time, accumulated impact is massive.</p>
+          </div>
+          <div class="card">
+            <h3>Definition of Done</h3>
+            <p>Enforce quality in acceptance criteria</p>
+            <p style="font-size:12px;margin-top:10px;">- Tests written + passing<br>- Coverage maintained<br>- No new smells introduced</p>
+          </div>
+          <div class="card">
+            <h3>Tech Debt Sprint</h3>
+            <p>Dedicate 1 sprint per quarter to debt</p>
+            <p style="font-size:12px;margin-top:10px;">20-30% of capacity focused on high-impact, high-effort items</p>
+          </div>
+          <div class="card">
+            <h3>Debt Tracking Backlog</h3>
+            <p>Backlog items for debt reduction</p>
+            <p style="font-size:12px;margin-top:10px;">Prioritize by impact:effort ratio. Pull when sprint has capacity.</p>
+          </div>
+        </div>
+
+        <h3>Debt Reduction Over Time</h3>
+        <div style="background:var(--surface2);border:1px solid var(--border);padding:20px;border-radius:4px;margin:15px 0;position:relative;height:200px;">
+          <svg viewBox="0 0 600 200" style="width:100%;height:100%;">
+            <!-- Axes -->
+            <line x1="50" y1="150" x2="550" y2="150" stroke="var(--border)" stroke-width="2"/>
+            <line x1="50" y1="150" x2="50" y2="30" stroke="var(--border)" stroke-width="2"/>
+            <!-- Debt reduction line -->
+            <polyline points="70,80 150,70 230,60 310,50 390,35 470,25 550,15" stroke="var(--yellow)" stroke-width="3" fill="none"/>
+            <!-- Velocity recovery line -->
+            <polyline points="70,120 150,110 230,100 310,85 390,60 470,45 550,35" stroke="var(--green)" stroke-width="3" fill="none"/>
+            <!-- Labels -->
+            <text x="560" y="80" font-size="12" fill="var(--yellow)">Debt</text>
+            <text x="560" y="120" font-size="12" fill="var(--green);">Velocity</text>
+            <text x="300" y="175" font-size="11" fill="var(--muted)" text-anchor="middle">Quarters →</text>
+            <text x="30" y="90" font-size="10" fill="var(--muted);" text-anchor="end">Hours</text>
+          </svg>
+          <p style="position:absolute;bottom:10px;left:10px;color:var(--muted);font-size:11px;">As debt decreases, velocity increases</p>
+        </div>
+      </div>
+
+      <!-- TAB 6: Exam Tips -->
+      <div class="tab-panel">
+        <h2>AZ-400 Exam Tips: Technical Debt & Quality 🎯</h2>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Technical Debt Quadrants</h3>
+            <p><strong>Key distinction:</strong> Reckless/Deliberate (bad), Prudent/Deliberate (acceptable), Inadvertent (learning)</p>
+            <p><strong>Exam Q:</strong> "Team takes shortcut to hit deadline, plans refactor later?" = Prudent/Deliberate (OK)</p>
+            <p><strong>Remember:</strong> Some debt is necessary for speed</p>
+          </div>
+
+          <div class="card">
+            <h3>SonarQube Quality Gates</h3>
+            <p><strong>Metrics tested:</strong> Bugs, Vulnerabilities, Code Smells, Coverage, Duplications, Complexity</p>
+            <p><strong>Exam Q:</strong> "How to fail pipeline on low coverage?" Use Quality Gate with failWhenQualityGateFails: true</p>
+            <p><strong>PR Decoration:</strong> SonarQube auto-comments on PRs with findings</p>
+          </div>
+
+          <div class="card">
+            <h3>Code Coverage Strategy</h3>
+            <p><strong>Branch coverage > Line coverage:</strong> Test all conditions, not just lines</p>
+            <p><strong>Realistic targets:</strong> 70% unit, 50% integration, 30% E2E</p>
+            <p><strong>Exam Q:</strong> "100% line coverage guarantees quality?" FALSE! Branch coverage matters</p>
+          </div>
+
+          <div class="card">
+            <h3>Azure Integration</h3>
+            <p><strong>Tasks:</strong> SonarQubePrepare, SonarQubeAnalyze, SonarQubePublish, PublishCodeCoverageResults</p>
+            <p><strong>Order matters:</strong> Prepare → Build → Analyze → Publish</p>
+            <p><strong>Exam Q:</strong> "Block merge on QG fail?" Use failWhenQualityGateFails in Publish task</p>
+          </div>
+
+          <div class="card">
+            <h3>Measuring Debt</h3>
+            <p><strong>SQALE:</strong> Converts issues → hours of remediation effort</p>
+            <p><strong>Debt Ratio:</strong> Debt hours / Codebase size = % debt</p>
+            <p><strong>Healthy: <5%, Concerning: 5-10%, Critical: >10%</strong></p>
+          </div>
+
+          <div class="card">
+            <h3>Reducing Debt</h3>
+            <p><strong>Boy Scout Rule:</strong> Leave code cleaner = incremental improvement</p>
+            <p><strong>Definition of Done:</strong> No new debt per feature</p>
+            <p><strong>Priority matrix:</strong> High impact/low effort = do first</p>
+          </div>
+        </div>
+
+        <h3>Common Exam Traps</h3>
+        <div class="grid">
+          <div class="card">
+            <p class="cons">❌ "High coverage = high quality" — Coverage is necessary but not sufficient!</p>
+          </div>
+          <div class="card">
+            <p class="cons">❌ "Skip SonarQube in early projects" — Quality gates prevent debt accumulation</p>
+          </div>
+          <div class="card">
+            <p class="cons">❌ "Technical debt is always bad" — Strategic debt for speed is acceptable</p>
+          </div>
+          <div class="card">
+            <p class="cons">❌ "SonarQube works without QG setup" — Gate must be configured to fail pipeline</p>
+          </div>
+        </div>
+
+        <h3>Final Checklist</h3>
+        <div style="background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;margin:15px 0;font-size:12px;">
+          ✓ Understand Fowler's 4 quadrants of technical debt?<br>
+          ✓ Know SonarQube metrics (bugs, vulns, smells, coverage, dups)?<br>
+          ✓ Branch vs line coverage — which matters more?<br>
+          ✓ Can you explain quality gates in pipeline?<br>
+          ✓ Know SQALE method and debt ratio calculation?<br>
+          ✓ Understand impact/effort prioritization?<br>
+          ✓ Can you configure SonarQube in azure-pipelines.yml?
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab-panel');
+    const buttons = document.querySelectorAll('.tab-button');
+
+    function switchTab(index) {
+      tabs.forEach(t => t.classList.remove('active'));
+      buttons.forEach(b => b.classList.remove('active'));
+      tabs[index].classList.add('active');
+      buttons[index].classList.add('active');
+    }
+
+    function showQuadrant(index) {
+      const details = document.getElementById('quadrant-details');
+      const quadrants = {
+        0: {
+          title: 'Reckless/Deliberate',
+          desc: '"We don\'t have time for design"',
+          strategy: 'Just ship it fast',
+          consequence: 'Massive debt, high interest, velocity crashes',
+          example: 'Skip architecture review, add technical debt on purpose',
+          acceptable: 'AVOID — Only acceptable in dire situations (startup death spiral)'
+        },
+        1: {
+          title: 'Reckless/Inadvertent',
+          desc: '"What\'s layering?"',
+          strategy: 'Team doesn\'t understand best practices',
+          consequence: 'Debt accumulates without awareness, hard to fix later',
+          example: 'Junior team creating tightly coupled monolith without knowing better',
+          acceptable: 'PREVENT — Invest in training and architecture review'
+        },
+        2: {
+          title: 'Prudent/Deliberate',
+          desc: '"We must ship now, will refactor later"',
+          strategy: 'Conscious decision: optimize for speed now',
+          consequence: 'Known debt, payoff scheduled, manageable',
+          example: 'Hack validation layer to ship feature by deadline, plan proper refactor Q2',
+          acceptable: 'ACCEPTABLE — Best path when speed matters more than perfection'
+        },
+        3: {
+          title: 'Prudent/Inadvertent',
+          desc: '"Now we know how we should have done it"',
+          strategy: 'Learning from first implementation',
+          consequence: 'Healthy debt from gaining knowledge, refactor improves design',
+          example: 'First API design was naive, v2 is better after learning usage patterns',
+          acceptable: 'HEALTHY — Natural part of learning and improving'
+        }
+      };
+
+      const info = quadrants[index];
+      details.innerHTML = `
+        <h4 style="margin-top:0;color:var(--blue);">${info.title}</h4>
+        <p style="color:var(--muted);font-size:12px;margin-bottom:10px;"><em>${info.desc}</em></p>
+        <p><strong>Strategy:</strong> ${info.strategy}</p>
+        <p><strong>Consequence:</strong> ${info.consequence}</p>
+        <p><strong>Example:</strong> ${info.example}</p>
+        <p style="padding:8px;background:var(--bg);border-left:3px solid var(--blue);border-radius:3px;margin-top:10px;"><strong>Assessment:</strong> ${info.acceptable}</p>
+      `;
+    }
+
+    function initQualityGate() {
+      document.getElementById('quality-gate-before').style.display = 'block';
+      document.getElementById('quality-gate-after').style.display = 'none';
+    }
+
+    function simulatefixes() {
+      document.getElementById('quality-gate-before').style.display = 'none';
+      document.getElementById('quality-gate-after').style.display = 'block';
+    }
+
+    function addDebtItem(name, impact, effort) {
+      const impactPos = { high: 'top:10%', medium: 'top:35%', low: 'top:60%' };
+      const effortPos = { high: 'right:10%', medium: 'right:35%', low: 'right:60%' };
+
+      let target = null;
+      if (impact === 'high' && effort === 'low') target = 'matrix-topright';
+      else if (impact === 'high' && effort === 'medium') target = 'matrix-topright';
+      else if (impact === 'high' && effort === 'high') target = 'matrix-topright';
+      else if (impact === 'medium' && effort === 'low') target = 'matrix-topright';
+      else if (impact === 'medium' && effort === 'high') target = 'matrix-topright';
+      else if (impact === 'low') target = 'matrix-bottomleft';
+
+      const container = document.getElementById(target);
+      if (!container) return;
+
+      const item = document.createElement('div');
+      item.className = 'matrix-item';
+      item.textContent = name;
+      item.style.fontSize = '11px';
+      container.appendChild(item);
+    }
+
+    function clearMatrix() {
+      ['matrix-topleft', 'matrix-topright', 'matrix-bottomleft', 'matrix-bottomright'].forEach(id => {
+        document.getElementById(id).innerHTML = '';
+      });
+    }
+
+    // Initialize first quadrant
+    showQuadrant(2);
+    initQualityGate();
+  </script>
+</body>
+</html>

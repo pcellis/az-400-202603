@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 6 — InnerSource & Fork Workflows</title>
+  <style>
+    :root{
+      --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+      --text:#e6edf3;--muted:#8b949e;
+      --green:#3fb950;--blue:#58a6ff;--red:#f85149;--yellow:#d29922;
+      --orange:#e3b341;--purple:#bc8cff;--pink:#f778ba;--teal:#39d353;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'Cascadia Code','Fira Code',monospace,system-ui;line-height:1.6;}
+    nav{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--border);padding:1rem;display:flex;justify-content:space-between;align-items:center;z-index:100;}
+    .nav-logo{font-size:1.2rem;font-weight:bold;display:flex;align-items:center;gap:0.5rem;}
+    .wf-tabs{display:flex;gap:1rem;flex-wrap:wrap;}
+    .wf-tab{background:transparent;border:none;color:var(--muted);padding:0.5rem 1rem;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.3s;font-family:inherit;}
+    .wf-tab:hover{color:var(--text);}
+    .wf-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+    .container{max-width:1200px;margin:0 auto;padding:2rem;}
+    .tab-content{display:none;}
+    .tab-content.active{display:block;}
+    .terminal{background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin:1rem 0;overflow:hidden;}
+    .tbar{background:var(--surface);padding:0.75rem;display:flex;align-items:center;gap:0.75rem;border-bottom:1px solid var(--border);}
+    .td{width:12px;height:12px;border-radius:50%;}
+    .tlabel{color:var(--muted);font-size:0.85rem;flex:1;text-align:right;}
+    .tbody{padding:1rem;font-size:0.95rem;}
+    .tc{color:var(--green);margin:0.5rem 0;}
+    .tc::before{content:"$ ";font-weight:bold;}
+    .to{color:var(--muted);margin:0.25rem 0 0.5rem 1rem;}
+    .tok{color:var(--green);margin:0.25rem 0 0.5rem 1rem;}
+    .callout{display:flex;gap:1rem;padding:1rem;border-radius:8px;border-left:4px solid;margin:1rem 0;}
+    .callout.info{background:rgba(88,166,255,0.1);border-color:var(--blue);}
+    .callout.warn{background:rgba(210,153,34,0.1);border-color:var(--yellow);}
+    .callout.success{background:rgba(63,185,80,0.1);border-color:var(--green);}
+    .callout.danger{background:rgba(248,81,73,0.1);border-color:var(--red);}
+    .callout.tip{background:rgba(188,140,255,0.1);border-color:var(--purple);}
+    .ci{font-size:1.25rem;min-width:1.5rem;}
+    .panel{background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin:1rem 0;overflow:hidden;}
+    .panel-header{background:var(--surface);padding:0.75rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;font-weight:bold;}
+    .ph-dot{width:10px;height:10px;border-radius:50%;}
+    .panel-body{padding:1.5rem;}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1rem 0;}
+    .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin:1rem 0;}
+    .code{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1rem;overflow-x:auto;margin:1rem 0;font-size:0.9rem;}
+    .code-kw{color:var(--purple);}
+    .code-str{color:var(--teal);}
+    .code-comment{color:var(--muted);}
+    .code-func{color:var(--blue);}
+    h1{margin:1.5rem 0 1rem;font-size:2rem;}
+    h2{margin:1.5rem 0 0.75rem;font-size:1.5rem;color:var(--blue);}
+    h3{margin:1rem 0 0.5rem;font-size:1.2rem;color:var(--text);}
+    p{margin:0.75rem 0;}
+    .btn{background:var(--blue);color:var(--bg);border:none;padding:0.75rem 1.5rem;border-radius:6px;cursor:pointer;font-weight:bold;transition:all 0.3s;font-family:inherit;font-size:1rem;}
+    .btn:hover{filter:brightness(1.2);}
+    .btn-group{display:flex;gap:1rem;margin:1.5rem 0;flex-wrap:wrap;}
+    .diagram{background:var(--surface);border:1px solid var(--border);padding:2rem;border-radius:8px;margin:1.5rem 0;text-align:center;}
+    .diagram-box{display:inline-block;background:var(--surface2);border:2px solid var(--border);padding:1rem 1.5rem;margin:0.5rem;border-radius:6px;min-width:140px;font-weight:bold;}
+    .diagram-arrow{display:inline-block;margin:0 0.75rem;color:var(--blue);font-weight:bold;}
+    .table{width:100%;border-collapse:collapse;margin:1rem 0;}
+    .table th{background:var(--surface);color:var(--text);padding:0.75rem;text-align:left;border-bottom:2px solid var(--border);}
+    .table td{padding:0.75rem;border-bottom:1px solid var(--border);}
+    .table tr:hover{background:var(--surface2);}
+    .raci-matrix{display:grid;grid-template-columns:150px 1fr 1fr 1fr;gap:0.5rem;margin:1rem 0;}
+    .raci-cell{background:var(--surface);padding:0.75rem;border-radius:4px;border:1px solid var(--border);}
+    .raci-header{font-weight:bold;background:var(--surface2);border-left:3px solid var(--blue);}
+    .raci-role{font-weight:bold;background:var(--surface2);border-left:3px solid var(--blue);}
+    .raci-r{background:rgba(63,185,80,0.15);color:var(--green);}
+    .raci-a{background:rgba(58,166,255,0.15);color:var(--blue);}
+    .raci-c{background:rgba(210,153,34,0.15);color:var(--yellow);}
+    .raci-i{background:rgba(139,148,158,0.15);color:var(--muted);}
+    .repo-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin:1rem 0;}
+    .repo-title{font-size:1.1rem;font-weight:bold;color:var(--blue);margin-bottom:0.5rem;}
+    .repo-meta{color:var(--muted);font-size:0.9rem;margin:0.25rem 0;}
+    .health-bar{background:var(--surface);height:6px;border-radius:3px;margin:0.5rem 0;overflow:hidden;}
+    .health-fill{height:100%;background:var(--green);}
+    .checklist{margin:1rem 0;}
+    .checklist-item{display:flex;gap:0.75rem;margin:0.5rem 0;padding:0.5rem;background:var(--surface);border-radius:4px;}
+    .checklist-box{width:20px;height:20px;background:var(--surface2);border:2px solid var(--border);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .checklist-box.checked{background:var(--green);border-color:var(--green);color:var(--bg);}
+    .comparison-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1rem 0;}
+    .comparison-cell{background:var(--surface);padding:1rem;border-radius:6px;border-left:3px solid var(--border);}
+    .comparison-cell.good{border-left-color:var(--green);}
+    .comparison-cell.bad{border-left-color:var(--red);}
+    .comparison-cell.neutral{border-left-color:var(--blue);}
+    .journey-step{background:var(--surface2);padding:1rem;margin:0.75rem 0;border-left:3px solid var(--blue);border-radius:4px;}
+    .journey-step.complete{border-left-color:var(--green);}
+    .step-num{display:inline-block;background:var(--blue);color:var(--bg);width:24px;height:24px;border-radius:50%;text-align:center;line-height:24px;font-weight:bold;margin-right:0.5rem;}
+    .step-num.complete{background:var(--green);}
+    .icon{display:inline-block;margin-right:0.5rem;}
+    ul{margin-left:1.5rem;}
+    li{margin:0.5rem 0;}
+    code{background:var(--surface);padding:0.2rem 0.4rem;border-radius:3px;color:var(--teal);}
+    @media(max-width:768px){
+      .two-col{grid-template-columns:1fr;}
+      .three-col{grid-template-columns:1fr;}
+      .comparison-row{grid-template-columns:1fr;}
+      .raci-matrix{grid-template-columns:1fr;}
+      nav{flex-direction:column;gap:1rem;}
+      .wf-tabs{justify-content:center;}
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo">🔷 <span>Module 6: InnerSource & Fork Workflows</span></div>
+    <div class="wf-tabs">
+      <button class="wf-tab active" onclick="showTab('tab1')">What is InnerSource?</button>
+      <button class="wf-tab" onclick="showTab('tab2')">Fork Workflow</button>
+      <button class="wf-tab" onclick="showTab('tab3')">Trusted Committers</button>
+      <button class="wf-tab" onclick="showTab('tab4')">InnerSource Portal</button>
+      <button class="wf-tab" onclick="showTab('tab5')">Governing Contributions</button>
+      <button class="wf-tab" onclick="showTab('tab6')">Exam Tips</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- TAB 1: What is InnerSource? -->
+    <div id="tab1" class="tab-content active">
+      <h1>What is InnerSource?</h1>
+      <p><strong>InnerSource:</strong> Applying open source development practices and culture to internal software development within an organization.</p>
+
+      <h2>The Problem: Organizational Silos</h2>
+      <div class="diagram">
+        <div><strong>Traditional Corporate Development</strong></div>
+        <div style="margin-top:1.5rem;">
+          <div class="diagram-box" style="background:var(--surface);">Team A<br>Library X<br>Secret Code</div>
+          <div class="diagram-box" style="background:var(--surface);">Team B<br>Library X v2<br>Duplicated</div>
+          <div class="diagram-box" style="background:var(--surface);">Team C<br>Library X v3<br>Duplicated</div>
+        </div>
+        <p style="margin-top:1rem;color:var(--red);">❌ Code Duplication, No Reuse, Knowledge Silos</p>
+      </div>
+
+      <h2>The Solution: InnerSource</h2>
+      <div class="diagram">
+        <div><strong>InnerSource Collaboration</strong></div>
+        <div style="margin-top:1.5rem;">
+          <div class="diagram-box" style="background:rgba(63,185,80,0.2);border-color:var(--green);">
+            Upstream Repo<br>Library X<br>Team A + Team B + Team C
+          </div>
+          <div class="diagram-arrow">←</div>
+          <div class="diagram-box" style="background:rgba(58,166,255,0.2);border-color:var(--blue);">
+            Contributions<br>Pull Requests<br>Code Review
+          </div>
+        </div>
+        <p style="margin-top:1rem;color:var(--green);">✅ Single Source of Truth, Shared Ownership, Knowledge Sharing</p>
+      </div>
+
+      <h2>Four Principles of InnerSource</h2>
+      <div class="three-col">
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Openness</div>
+          <div class="panel-body">
+            Source code is readable by all internal developers. Anyone can propose changes via PRs. Discussions are transparent.
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Transparency</div>
+          <div class="panel-body">
+            Project roadmap, decisions, and issues are visible. Why was something rejected? Anyone can see the rationale.
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#bc8cff"></div>Voluntary Code Contribution</div>
+          <div class="panel-body">
+            Contributing is optional, not mandated. Teams contribute when it benefits them. Quality over quantity.
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#f778ba"></div>Prioritized Mentorship</div>
+        <div class="panel-body">
+          <p>Senior developers (Trusted Committers) mentor new contributors. Knowledge transfer is a priority, not an afterthought.</p>
+        </div>
+      </div>
+
+      <h2>Real-World Impact (Anonymized Examples)</h2>
+      <ul>
+        <li><strong>Large Bank:</strong> Reduced internal library duplication from 47 to 8 core libraries through InnerSource. Saved millions in maintenance.</li>
+        <li><strong>Tech Firm:</strong> Built internal "npm" registry. Teams now share 300+ reusable packages. 40% faster feature development.</li>
+        <li><strong>Automotive Company:</strong> Cross-team InnerSource contributions prevented 3 major security incidents (shared code review caught 0-day patterns).</li>
+      </ul>
+
+      <h2>InnerSource vs Open Source vs Traditional Corporate</h2>
+      <table class="table">
+        <tr>
+          <th>Aspect</th>
+          <th>Traditional Corporate</th>
+          <th>InnerSource</th>
+          <th>Open Source</th>
+        </tr>
+        <tr>
+          <td><strong>Code Visibility</strong></td>
+          <td>Team-only</td>
+          <td>All internal developers</td>
+          <td>Public</td>
+        </tr>
+        <tr>
+          <td><strong>Contributors</strong></td>
+          <td>Single team only</td>
+          <td>Any internal team</td>
+          <td>Anyone globally</td>
+        </tr>
+        <tr>
+          <td><strong>Review Process</strong></td>
+          <td>Ad-hoc or slow</td>
+          <td>Transparent, inclusive</td>
+          <td>Strict, meritocratic</td>
+        </tr>
+        <tr>
+          <td><strong>Licensing</strong></td>
+          <td>Internal only</td>
+          <td>Internal only</td>
+          <td>Public license (MIT, GPL, etc.)</td>
+        </tr>
+        <tr>
+          <td><strong>Incentive</strong></td>
+          <td>Team alignment</td>
+          <td>Reuse, reduce duplication</td>
+          <td>Community recognition</td>
+        </tr>
+      </table>
+
+      <div class="callout success">
+        <span class="ci">✅</span>
+        <span><strong>Key Insight:</strong> InnerSource is the sweet spot — you get open source benefits (reuse, transparency, community) without the external complexity (licensing, security concerns, public reputation).</span>
+      </div>
+    </div>
+
+    <!-- TAB 2: Fork Workflow Explained -->
+    <div id="tab2" class="tab-content">
+      <h1>Fork Workflow Explained</h1>
+
+      <div class="diagram">
+        <div><strong>Fork Workflow Lifecycle</strong></div>
+        <div style="margin-top:1rem;font-size:0.9rem;">
+          <div class="diagram-box">Upstream<br>Repo</div>
+          <div class="diagram-arrow">Fork</div>
+          <div class="diagram-box">Your Fork</div>
+          <div class="diagram-arrow">Clone</div>
+          <div class="diagram-box">Local<br>Copy</div>
+        </div>
+        <div style="margin-top:1rem;">
+          <div class="diagram-box">Create<br>Branch</div>
+          <div class="diagram-arrow">Commit</div>
+          <div class="diagram-box">Push to<br>Fork</div>
+          <div class="diagram-arrow">PR</div>
+          <div class="diagram-box">Merge to<br>Upstream</div>
+        </div>
+      </div>
+
+      <h2>Step-by-Step Fork Workflow</h2>
+
+      <div class="btn-group">
+        <button class="btn" onclick="animateStep(1)">▶ Step 1: Fork</button>
+        <button class="btn" onclick="animateStep(2)">▶ Step 2: Clone</button>
+        <button class="btn" onclick="animateStep(3)">▶ Step 3: Add Upstream</button>
+        <button class="btn" onclick="animateStep(4)">▶ Step 4: Create Branch</button>
+        <button class="btn" onclick="animateStep(5)">▶ Step 5: Commit & Push</button>
+        <button class="btn" onclick="animateStep(6)">▶ Step 6: Open PR</button>
+      </div>
+
+      <div id="step-output"></div>
+
+      <h2>Fork vs Feature Branch: Key Differences</h2>
+      <div class="comparison-row">
+        <div class="comparison-cell neutral">
+          <strong>Feature Branch</strong><br><br>
+          Single shared repo<br>
+          <code>git checkout -b feature/x</code><br>
+          Push directly<br>
+          Limited access control<br>
+          Good for: small teams
+        </div>
+        <div class="comparison-cell good">
+          <strong>Fork Workflow</strong><br><br>
+          Separate fork repo<br>
+          Fork on GitHub/Azure<br>
+          Push to fork, then PR<br>
+          Full access control<br>
+          Good for: open collab
+        </div>
+        <div class="comparison-cell neutral">
+          <strong>When to Use Fork</strong><br><br>
+          InnerSource projects<br>
+          External contributors<br>
+          Security-sensitive work<br>
+          Large organizations<br>
+          Guest developers
+        </div>
+      </div>
+
+      <h2>Syncing Fork with Upstream</h2>
+      <p>Your fork gets out of sync with the upstream repo. Here's how to update it:</p>
+
+      <div class="code">
+<span class="code-comment"># Add upstream as a remote (one-time)</span><br>
+<span class="code-func">git</span> remote add upstream https://github.com/org/original-repo.git<br>
+<br>
+<span class="code-comment"># Fetch latest from upstream</span><br>
+<span class="code-func">git</span> fetch upstream<br>
+<br>
+<span class="code-comment"># Rebase your changes on top of upstream/main</span><br>
+<span class="code-func">git</span> rebase upstream/main<br>
+<br>
+<span class="code-comment"># Force push to your fork (safe because it's your repo)</span><br>
+<span class="code-func">git</span> push --force origin main
+      </div>
+
+      <div class="callout warn">
+        <span class="ci">⚠️</span>
+        <span><strong>Exam Trap:</strong> The question "How do you keep a fork synchronized?" tests whether you know <code>git fetch upstream</code> and <code>git rebase</code>. Some candidates try <code>git pull</code> which creates merge commits (messy).</span>
+      </div>
+
+      <h2>Common Fork Workflow Scenarios</h2>
+
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Scenario 1: You Forgot to Create a Branch</div>
+        <div class="panel-body">
+          <div class="code">
+<span class="code-comment"># You committed directly to main. Oops.</span><br>
+<span class="code-func">git</span> log --oneline<br>
+a1b2c3d Fix login bug<br>
+d4e5f6g Initial commit<br>
+<br>
+<span class="code-comment"># Create new branch from your commit</span><br>
+<span class="code-func">git</span> branch feature/login-fix<br>
+<span class="code-func">git</span> reset --hard upstream/main<br>
+<span class="code-func">git</span> checkout feature/login-fix<br>
+<span class="code-func">git</span> push origin feature/login-fix
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Scenario 2: Your PR Got Conflict Notifications</div>
+        <div class="panel-body">
+          <div class="code">
+<span class="code-comment"># Rebase to resolve conflicts</span><br>
+<span class="code-func">git</span> fetch upstream<br>
+<span class="code-func">git</span> rebase upstream/main<br>
+<span class="code-comment"># Fix conflicts in your editor</span><br>
+<span class="code-func">git</span> add .<br>
+<span class="code-func">git</span> rebase --continue<br>
+<span class="code-func">git</span> push --force origin your-branch
+          </div>
+        </div>
+      </div>
+
+      <div class="callout success">
+        <span class="ci">✅</span>
+        <span><strong>Best Practice:</strong> Always keep your fork updated with <code>git fetch upstream</code> frequently. This prevents conflict explosions.</span>
+      </div>
+    </div>
+
+    <!-- TAB 3: Trusted Committers vs Contributors -->
+    <div id="tab3" class="tab-content">
+      <h1>Trusted Committers vs Contributors</h1>
+
+      <h2>Role Definitions</h2>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Contributor</div>
+          <div class="panel-body">
+            <p><strong>Who:</strong> Any internal developer</p>
+            <p><strong>Can Do:</strong></p>
+            <ul>
+              <li>Fork the repo</li>
+              <li>Create feature branches</li>
+              <li>Submit PRs</li>
+              <li>Discuss in issues</li>
+              <li>Review others' PRs (advice)</li>
+            </ul>
+            <p style="margin-top:1rem;"><strong>Cannot Do:</strong></p>
+            <ul>
+              <li>Merge PRs</li>
+              <li>Push directly to upstream</li>
+              <li>Delete branches</li>
+              <li>Release versions</li>
+            </ul>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Trusted Committer</div>
+          <div class="panel-body">
+            <p><strong>Who:</strong> Senior devs (usually from original team)</p>
+            <p><strong>Can Do:</strong></p>
+            <ul>
+              <li>Review and merge PRs</li>
+              <li>Push directly to main</li>
+              <li>Manage releases & versioning</li>
+              <li>Mentor contributors</li>
+              <li>Set project direction</li>
+              <li>Manage access & permissions</li>
+            </ul>
+            <p style="margin-top:1rem;"><strong>Responsibilities:</strong></p>
+            <ul>
+              <li>Code quality</li>
+              <li>Maintain project health</li>
+              <li>Mentoring new contributors</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h2>RACI-Style Responsibility Matrix</h2>
+      <p style="margin-bottom:1rem;"><strong>Legend:</strong> R=Responsible, A=Accountable, C=Consulted, I=Informed</p>
+
+      <div class="raci-matrix">
+        <div class="raci-cell raci-header">Task</div>
+        <div class="raci-cell raci-header">Contributor</div>
+        <div class="raci-cell raci-header">Trusted Committer</div>
+        <div class="raci-cell raci-header">Maintainer (Team)</div>
+
+        <div class="raci-cell">Submit PR</div>
+        <div class="raci-cell raci-r">R</div>
+        <div class="raci-cell raci-i">I</div>
+        <div class="raci-cell raci-i">I</div>
+
+        <div class="raci-cell">Code Review</div>
+        <div class="raci-cell raci-c">C</div>
+        <div class="raci-cell raci-r">R</div>
+        <div class="raci-cell raci-a">A</div>
+
+        <div class="raci-cell">Merge PR</div>
+        <div class="raci-cell"></div>
+        <div class="raci-cell raci-r">R</div>
+        <div class="raci-cell raci-a">A</div>
+
+        <div class="raci-cell">Release Version</div>
+        <div class="raci-cell"></div>
+        <div class="raci-cell raci-r">R</div>
+        <div class="raci-cell raci-a">A</div>
+
+        <div class="raci-cell">Mentor Contributors</div>
+        <div class="raci-cell"></div>
+        <div class="raci-cell raci-r">R</div>
+        <div class="raci-cell raci-c">C</div>
+
+        <div class="raci-cell">Set Roadmap</div>
+        <div class="raci-cell raci-c">C</div>
+        <div class="raci-cell raci-c">C</div>
+        <div class="raci-cell raci-a">A</div>
+      </div>
+
+      <h2>Contribution Guide Requirements</h2>
+      <div class="checklist">
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>README.md</strong> — What does this project do? How to install?</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>CONTRIBUTING.md</strong> — How to fork, PR, code style guide</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>CODE_OF_CONDUCT.md</strong> — Expected behavior, conflict resolution</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>LICENSE</strong> — Internal license (e.g., "Internal Use Only")</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>MAINTAINERS.md</strong> — Who are the Trusted Committers?</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>Issues Template</strong> — Bug report vs feature request</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>PR Template</strong> — Description, testing steps, Closes #123</div>
+        </div>
+      </div>
+
+      <h2>Guest Contributor Journey</h2>
+
+      <div class="journey-step">
+        <span class="step-num complete">1</span>
+        <strong>Discovery</strong> — Find a project on InnerSource portal
+      </div>
+
+      <div class="journey-step">
+        <span class="step-num complete">2</span>
+        <strong>Fork & Setup</strong> — Clone locally, add upstream remote
+      </div>
+
+      <div class="journey-step">
+        <span class="step-num complete">3</span>
+        <strong>Issue or Feature</strong> — Find issue tagged "help wanted" or propose feature
+      </div>
+
+      <div class="journey-step">
+        <span class="step-num complete">4</span>
+        <strong>Create Branch & Code</strong> — Follow CONTRIBUTING.md guidelines
+      </div>
+
+      <div class="journey-step">
+        <span class="step-num complete">5</span>
+        <strong>Submit PR</strong> — Trusted Committer reviews (SLA: X days response)
+      </div>
+
+      <div class="journey-step">
+        <span class="step-num complete">6</span>
+        <strong>Feedback Loop</strong> — TC mentors, you iterate
+      </div>
+
+      <div class="journey-step">
+        <span class="step-num complete">7</span>
+        <strong>Merge</strong> — TC merges and releases
+      </div>
+
+      <div class="journey-step">
+        <span class="step-num complete">8</span>
+        <strong>Recognition</strong> — Added to CONTRIBUTORS.md, public credit
+      </div>
+
+      <h2>TC Benefits: Reducing Bus Factor</h2>
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#f778ba"></div>Bus Factor Problem</div>
+        <div class="panel-body">
+          <p><strong>Without InnerSource (Traditional):</strong> Only 1-2 developers know critical library. If they leave, team is stuck.</p>
+          <p style="margin-top:1rem;"><strong>With InnerSource (Trusted Committers):</strong> 5-10 TCs from different teams know the codebase. Knowledge is distributed. Single person leaving doesn't break continuity.</p>
+          <p style="margin-top:1rem;color:var(--green);">✅ Bus factor increases from 1-2 to 5-10</p>
+        </div>
+      </div>
+
+      <div class="callout success">
+        <span class="ci">✅</span>
+        <span><strong>Exam Focus:</strong> Understand that Trusted Committers are not just code reviewers — they're mentors, gatekeepers of quality, and knowledge sharers. Their role prevents silos.</span>
+      </div>
+    </div>
+
+    <!-- TAB 4: InnerSource Portal & Discovery -->
+    <div id="tab4" class="tab-content">
+      <h1>InnerSource Portal & Discovery</h1>
+
+      <p>An <strong>InnerSource Portal</strong> is a central catalog of all internal open source projects. It's like an internal "npm registry" for your company.</p>
+
+      <h2>Portal Features</h2>
+
+      <div class="repo-card">
+        <div class="repo-title">logger-utils</div>
+        <div class="repo-meta">JavaScript • By: Platform Team • Last updated: 2 days ago</div>
+        <div class="repo-meta">⭐ 24 stars • 🔀 8 forks • 👥 3 Trusted Committers</div>
+        <div class="repo-meta" style="color:var(--green);margin-top:0.5rem;">Health Score: 95%</div>
+        <div class="health-bar">
+          <div class="health-fill" style="width:95%"></div>
+        </div>
+        <p style="margin-top:1rem;">Structured logging library with context tracking, log levels, and Datadog integration.</p>
+        <p style="margin-top:0.75rem;"><strong>Tags:</strong> logging, observability, utilities</p>
+        <p><strong>Topics:</strong> nodejs, typescript, opentelemetry</p>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-title">payment-sdk</div>
+        <div class="repo-meta">Python • By: Finance Team • Last updated: 1 week ago</div>
+        <div class="repo-meta">⭐ 41 stars • 🔀 12 forks • 👥 5 Trusted Committers</div>
+        <div class="repo-meta" style="color:var(--green);margin-top:0.5rem;">Health Score: 88%</div>
+        <div class="health-bar">
+          <div class="health-fill" style="width:88%"></div>
+        </div>
+        <p style="margin-top:1rem;">Unified API for credit card, ACH, wire, and crypto payment processing.</p>
+        <p style="margin-top:0.75rem;"><strong>Status:</strong> Advertised (accepting contributions)</p>
+      </div>
+
+      <h2>Repository Health Indicators</h2>
+      <div class="three-col">
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Health Metrics</div>
+          <div class="panel-body">
+            <ul>
+              <li>✓ README complete</li>
+              <li>✓ CONTRIBUTING.md exists</li>
+              <li>✓ Active Trusted Committer</li>
+              <li>✓ Good issue labels</li>
+              <li>✓ Recent activity (within 30 days)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Metadata</div>
+          <div class="panel-body">
+            <ul>
+              <li>Language/Stack</li>
+              <li>InnerSource tags</li>
+              <li>Owner team</li>
+              <li>Fork count</li>
+              <li>Contributor count</li>
+            </ul>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#bc8cff"></div>Status</div>
+          <div class="panel-body">
+            <ul>
+              <li><strong>Advertised:</strong> Actively seeking contributions</li>
+              <li><strong>Active:</strong> Open for contributions</li>
+              <li><strong>Hidden:</strong> Contributions discouraged</li>
+              <li><strong>Deprecated:</strong> Don't use, see alternative X</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h2>Making a Repo InnerSource-Ready (Checklist)</h2>
+
+      <div class="checklist">
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>Add to InnerSource Portal</strong> — Register in GitHub/GitLab topics or dedicated portal</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>Write Clear README</strong> — Purpose, quick start, examples</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>Create CONTRIBUTING.md</strong> — How to fork, PR workflow, code style</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>Set Up Automated Tests</strong> — CI/CD must run on every PR</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>Use Clear Issue Labels</strong> — "help wanted", "good first issue", priority</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>Define Trusted Committers</strong> — MAINTAINERS.md with bios/contact</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>Enable Discussions</strong> — GitHub Discussions for questions vs Issues for bugs</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>Set SLA for Response** — "We respond to PRs within 5 business days"</div>
+        </div>
+        <div class="checklist-item">
+          <div class="checklist-box checked">✓</div>
+          <div><strong>Tag with Topics</strong> — nodejs, python, observability, security, etc.</div>
+        </div>
+      </div>
+
+      <h2>Discovery UX</h2>
+      <p>InnerSource portal should support:</p>
+      <ul>
+        <li><strong>Search by capability:</strong> "logging" → shows logger-utils, structured-logs, etc.</li>
+        <li><strong>Search by language:</strong> "typescript" → only TypeScript projects</li>
+        <li><strong>Search by team:</strong> "Platform Team" → all their projects</li>
+        <li><strong>Trending:</strong> Most starred, most forked, most active</li>
+        <li><strong>Needs contributors:</strong> Filter by "help wanted" issues count</li>
+        <li><strong>Recently updated:</strong> Active maintenance indicator</li>
+      </ul>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <span><strong>Portal Examples:</strong> SAP InnerSource has a formal Marketplace, GitHub can use the search API, some orgs use Backstage.io as an internal developer portal.</span>
+      </div>
+
+      <div class="callout success">
+        <span class="ci">✅</span>
+        <span><strong>Exam Insight:</strong> InnerSource maturity is measured by: (1) Portal existence, (2) Health scores, (3) Contributor count, (4) Cross-team PRs. Expect questions about how to measure InnerSource success.</span>
+      </div>
+    </div>
+
+    <!-- TAB 5: Governing Contributions -->
+    <div id="tab5" class="tab-content">
+      <h1>Governing Contributions</h1>
+
+      <h2>PR Review SLAs (Service Level Agreements)</h2>
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Example SLA Policy</div>
+        <div class="panel-body">
+          <ul>
+            <li><strong>Acknowledgment:</strong> TC must acknowledge PR within 1 business day (even if just "thanks, will review")</li>
+            <li><strong>First Review:</strong> Substantive feedback within 3 business days</li>
+            <li><strong>Merge Decision:</strong> Yes/No/Needs Changes within 5 business days</li>
+            <li><strong>Abandoned PRs:</strong> If no activity for 30 days, auto-close with comment</li>
+            <li><strong>Security Issues:</strong> 1 business day acknowledgment, fix within 7 days</li>
+          </ul>
+          <p style="margin-top:1rem;"><strong>Why SLAs Matter:</strong> Contributors need confidence they'll get feedback. Vague timelines kill participation.</p>
+        </div>
+      </div>
+
+      <h2>Contribution Agreement</h2>
+      <p>Some organizations require contributors to sign an agreement:</p>
+
+      <div class="code">
+<span class="code-comment">// CONTRIBUTOR AGREEMENT (excerpt)</span><br>
+I certify that:<br>
+<br>
+1. I have the right to contribute this code<br>
+2. The code is my own work (or properly attributed)<br>
+3. The code does not contain trade secrets<br>
+4. The code follows company security policies<br>
+5. I grant the company license to use my contributions<br>
+6. I waive any rights to the contributed code
+      </div>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <span><strong>Note:</strong> Most internal InnerSource agreements are simpler than external open source CLAs (Contributor License Agreements). You're just confirming you have the right to contribute.</span>
+      </div>
+
+      <h2>Quality Gates for Merging</h2>
+      <div class="three-col">
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Code Quality</div>
+          <div class="panel-body">
+            <ul>
+              <li>Tests must pass (100% required)</li>
+              <li>Code coverage maintained (or improved)</li>
+              <li>Linting/style checks pass</li>
+              <li>No hardcoded secrets</li>
+              <li>No dependency vulnerabilities</li>
+            </ul>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#bc8cff"></div>Documentation</div>
+          <div class="panel-body">
+            <ul>
+              <li>Changes documented</li>
+              <li>API docs updated</li>
+              <li>README/CHANGELOG updated</li>
+              <li>Migration guide (if breaking)</li>
+              <li>Examples provided</li>
+            </ul>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Review Requirements</div>
+          <div class="panel-body">
+            <ul>
+              <li>At least 1 Trusted Committer approval</li>
+              <li>No unresolved comments</li>
+              <li>Conversation tone is respectful</li>
+              <li>PR description explains "why"</li>
+              <li>Closes related issues</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h2>Handling Unwanted Contributions Gracefully</h2>
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#f778ba"></div>Scenario: TC Must Reject a PR</div>
+        <div class="panel-body">
+          <div class="code">
+<span class="code-comment">// WRONG: Dismissive rejection</span><br>
+<span class="code-str">"No. This is bad."</span><br>
+<br>
+<span class="code-comment">// RIGHT: Constructive feedback</span><br>
+<span class="code-str">"Thanks for the contribution! This approach conflicts with our</span><br>
+<span class="code-str">architecture because [reason]. Here's the design pattern we use:</span><br>
+<span class="code-str">[example]. Would you be interested in tackling [different issue]</span><br>
+<span class="code-str">instead? We'd love your help there."</span>
+          </div>
+          <p style="margin-top:1rem;"><strong>Key Principles:</strong></p>
+          <ul>
+            <li>Thank the contributor for their time</li>
+            <li>Explain <strong>why</strong> the approach doesn't work</li>
+            <li>Suggest an alternative or redirect them</li>
+            <li>Leave the door open for future contributions</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>Conflict Resolution & Escalation</h2>
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#e3b341"></div>Escalation Path</div>
+        <div class="panel-body">
+          <p><strong>Level 1:</strong> Contributor and TC discuss in PR comments</p>
+          <p style="margin-top:0.5rem;"><strong>Level 2:</strong> Involved TC + another TC make decision together</p>
+          <p style="margin-top:0.5rem;"><strong>Level 3:</strong> Escalate to InnerSource Program Manager</p>
+          <p style="margin-top:0.5rem;"><strong>Level 4:</strong> Team management/leadership decides</p>
+          <p style="margin-top:1rem;"><strong>Principle:</strong> TC decision is final at Levels 1-3. Only escalate when values/culture are at stake.</p>
+        </div>
+      </div>
+
+      <h2>Metrics: Measuring InnerSource Health</h2>
+      <table class="table">
+        <tr>
+          <th>Metric</th>
+          <th>What It Measures</th>
+          <th>Good Target</th>
+        </tr>
+        <tr>
+          <td><strong>Cross-team PRs</strong></td>
+          <td>% of PRs from teams outside the core team</td>
+          <td>&gt; 30%</td>
+        </tr>
+        <tr>
+          <td><strong>Contributor Count</strong></td>
+          <td>Unique contributors per quarter</td>
+          <td>Growing trend</td>
+        </tr>
+        <tr>
+          <td><strong>PR Merge Time</strong></td>
+          <td>Days from PR opened to merged</td>
+          <td>&lt; 7 days average</td>
+        </tr>
+        <tr>
+          <td><strong>Reuse Rate</strong></td>
+          <td>% of teams using the library</td>
+          <td>Depends on lib purpose</td>
+        </tr>
+        <tr>
+          <td><strong>TC Response Time</strong></td>
+          <td>Hours until first review</td>
+          <td>&lt; 24 hours</td>
+        </tr>
+        <tr>
+          <td><strong>Issue Response Time</strong></td>
+          <td>Hours until issue gets comment</td>
+          <td>&lt; 48 hours</td>
+        </tr>
+      </table>
+
+      <div class="callout success">
+        <span class="ci">✅</span>
+        <span><strong>Exam Insight:</strong> Questions about "governing contributions" test whether you understand that InnerSource needs structure. It's not just "open the code" — you need SLAs, quality gates, and clear escalation paths.</span>
+      </div>
+    </div>
+
+    <!-- TAB 6: Exam Tips -->
+    <div id="tab6" class="tab-content">
+      <h1>Exam Tips for InnerSource (AZ-400)</h1>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <span><strong>Tip 1:</strong> InnerSource is NOT about making code public. It's about sharing code <strong>internally with open source practices</strong>. Licensing is "Internal Use Only," not MIT/Apache.</span>
+      </div>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <span><strong>Tip 2:</strong> Fork Workflow vs Feature Branch Workflow — EXAM WILL DISTINGUISH THESE. Know when to use each.</span>
+      </div>
+
+      <table class="table" style="margin-top:1rem;">
+        <tr>
+          <th>Question Pattern</th>
+          <th>Expected Answer</th>
+        </tr>
+        <tr>
+          <td>"How do external teams contribute to a shared library?"</td>
+          <td>Fork workflow with PR to upstream</td>
+        </tr>
+        <tr>
+          <td>"How do you keep your fork in sync?"</td>
+          <td>git fetch upstream && git rebase</td>
+        </tr>
+        <tr>
+          <td>"What's a Trusted Committer?"</td>
+          <td>Code reviewer + mentor + gatekeeper</td>
+        </tr>
+        <tr>
+          <td>"How do you measure InnerSource success?"</td>
+          <td>Cross-team PRs, contributor count, reuse rate</td>
+        </tr>
+        <tr>
+          <td>"What should a repo have to be InnerSource-ready?"</td>
+          <td>README, CONTRIBUTING.md, CI/CD, good labels</td>
+        </tr>
+      </table>
+
+      <div class="callout warn">
+        <span class="ci">⚠️</span>
+        <span><strong>Trap 1:</strong> "InnerSource is like open source but internal." This is partially true but miss the point. InnerSource is about REUSE and COLLABORATION. It solves the "Team A doesn't know Team B built the same thing" problem.</span>
+      </div>
+
+      <div class="callout warn">
+        <span class="ci">⚠️</span>
+        <span><strong>Trap 2:</strong> Confusing fork workflow with feature branches. Exam scenario: "Guest developer from Finance team needs to contribute to Platform team's library." Answer: Fork workflow, NOT feature branch (they don't have write access).</span>
+      </div>
+
+      <div class="callout warn">
+        <span class="ci">⚠️</span>
+        <span><strong>Trap 3:</strong> Thinking TCs are just code reviewers. They're mentors, gatekeepers of quality, and knowledge sharers. TC absence = single point of failure (high bus factor).</span>
+      </div>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <span><strong>Scenario:</strong> "Your company has 50 teams. Each team built their own logging library. Now you're implementing InnerSource. What's the first step?" Answer: Create a centralized logging library, migrate teams to use it, establish TCs, publish to InnerSource portal.</span>
+      </div>
+
+      <div class="callout success">
+        <span class="ci">✅</span>
+        <span><strong>Key Concepts to Master:</strong> InnerSource benefits (reuse, reduce duplication), Fork workflow (not feature branches), Trusted Committer roles, Portal/discovery, Contribution governance.</span>
+      </div>
+
+      <h2>Related Topics in AZ-400</h2>
+      <ul>
+        <li><strong>Module 5 (Git Hooks):</strong> Use hooks to enforce Conventional Commits in InnerSource repos</li>
+        <li><strong>Module 7 (CI/CD):</strong> Every InnerSource repo needs automated tests, linting, security scans</li>
+        <li><strong>Module 8 (Documentation):</strong> InnerSource repos need excellent docs to enable contributions</li>
+        <li><strong>Module 9 (DevOps Culture):</strong> InnerSource is the cultural foundation — how you enable cross-team collaboration</li>
+      </ul>
+
+      <div class="callout success">
+        <span class="ci">✅</span>
+        <span><strong>Final Thought:</strong> InnerSource is about culture + process. It's harder than traditional corporate silos (requires governance, TCs, portal) but worth it for eliminating duplication, improving reuse, and building a collaborative engineering culture.</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.wf-tab').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    const steps = {
+      1: {
+        title: 'Step 1: Fork the Repository',
+        description: 'Click "Fork" on GitHub/Azure to create your own copy of the upstream repo',
+        terminal: [
+          { type: 'text', text: '# This happens in the GitHub UI' },
+          { type: 'text', text: '# Click Fork button on https://github.com/org/original-repo' },
+          { type: 'text', text: '# New repo created: https://github.com/yourname/original-repo' }
+        ]
+      },
+      2: {
+        title: 'Step 2: Clone Your Fork',
+        description: 'Clone your fork to your local machine',
+        terminal: [
+          { type: 'cmd', text: 'git clone https://github.com/yourname/original-repo.git' },
+          { type: 'out', text: 'Cloning into "original-repo"...' },
+          { type: 'out', text: 'remote: Enumerating objects: 1243, done.' },
+          { type: 'out', text: 'Receiving objects: 100% (1243/1243), 512 KiB | 1.2 MiB/s, done.' }
+        ]
+      },
+      3: {
+        title: 'Step 3: Add Upstream Remote',
+        description: 'Add the original repo as "upstream" so you can fetch updates',
+        terminal: [
+          { type: 'cmd', text: 'cd original-repo' },
+          { type: 'cmd', text: 'git remote add upstream https://github.com/org/original-repo.git' },
+          { type: 'cmd', text: 'git remote -v' },
+          { type: 'out', text: 'origin    https://github.com/yourname/original-repo.git (fetch)' },
+          { type: 'out', text: 'origin    https://github.com/yourname/original-repo.git (push)' },
+          { type: 'out', text: 'upstream  https://github.com/org/original-repo.git (fetch)' },
+          { type: 'out', text: 'upstream  https://github.com/org/original-repo.git (push)' }
+        ]
+      },
+      4: {
+        title: 'Step 4: Create Feature Branch',
+        description: 'Create a branch for your work. Always branch from upstream/main',
+        terminal: [
+          { type: 'cmd', text: 'git fetch upstream' },
+          { type: 'out', text: 'From https://github.com/org/original-repo' },
+          { type: 'out', text: ' * [new branch]      main       -> upstream/main' },
+          { type: 'cmd', text: 'git checkout -b feature/add-logging upstream/main' },
+          { type: 'out', text: 'Switched to a new branch "feature/add-logging"' }
+        ]
+      },
+      5: {
+        title: 'Step 5: Commit & Push to Your Fork',
+        description: 'Make changes, commit, and push to your fork (not upstream)',
+        terminal: [
+          { type: 'text', text: '# Edit files...' },
+          { type: 'cmd', text: 'git add src/logger.js' },
+          { type: 'cmd', text: 'git commit -m "feat(logger): add structured logging"' },
+          { type: 'out', text: '[feature/add-logging a1b2c3d] feat(logger): add structured logging' },
+          { type: 'out', text: ' 1 file changed, 50 insertions(+)' },
+          { type: 'cmd', text: 'git push origin feature/add-logging' },
+          { type: 'out', text: 'To https://github.com/yourname/original-repo.git' },
+          { type: 'out', text: ' * [new branch]      feature/add-logging -> feature/add-logging' }
+        ]
+      },
+      6: {
+        title: 'Step 6: Open Pull Request',
+        description: 'On GitHub, click "Compare & pull request" to open a PR to upstream',
+        terminal: [
+          { type: 'text', text: 'Base: org:original-repo main' },
+          { type: 'text', text: 'Head: yourname:original-repo feature/add-logging' },
+          { type: 'text', text: '' },
+          { type: 'text', text: 'Title: feat(logger): add structured logging' },
+          { type: 'text', text: '' },
+          { type: 'text', text: 'Description: Closes #42' },
+          { type: 'text', text: '- Adds structured logging with context' },
+          { type: 'text', text: '- Includes log levels and formatters' },
+          { type: 'text', text: '- All tests passing' }
+        ]
+      }
+    };
+
+    async function animateStep(stepNum) {
+      const step = steps[stepNum];
+      const output = document.getElementById('step-output');
+
+      let html = `<div style="margin-top:1.5rem;">
+        <h2>${step.title}</h2>
+        <p>${step.description}</p>
+        <div class="terminal">
+          <div class="tbar">
+            <div class="td" style="background:#f85149"></div>
+            <div class="td" style="background:#e3b341"></div>
+            <div class="td" style="background:#3fb950"></div>
+            <span class="tlabel">bash — ~/projects</span>
+          </div>
+          <div class="tbody" id="step-terminal">`;
+
+      for (let item of step.terminal) {
+        if (item.type === 'cmd') {
+          html += `<div class="tc">${item.text}</div>`;
+        } else if (item.type === 'out') {
+          html += `<div class="to">${item.text}</div>`;
+        } else {
+          html += `<div class="to" style="color:var(--text);font-style:italic;">${item.text}</div>`;
+        }
+      }
+
+      html += `</div></div></div>`;
+      output.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

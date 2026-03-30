@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 2 — Azure Boards & GitHub Projects | AZ-400</title>
+    <style>
+        :root{
+            --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+            --text:#e6edf3;--muted:#8b949e;
+            --green:#3fb950;--blue:#58a6ff;--red:#f85149;--yellow:#d29922;
+            --orange:#e3b341;--purple:#bc8cff;--pink:#f778ba;--teal:#39d353;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            background:var(--bg);color:var(--text);font-family:'Cascadia Code','Fira Code',monospace,system-ui;
+            line-height:1.6;font-size:14px
+        }
+        nav{
+            position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--border);
+            display:flex;justify-content:space-between;align-items:center;padding:12px 20px;z-index:100;overflow-x:auto
+        }
+        .nav-logo{display:flex;align-items:center;gap:8px;font-weight:bold;font-size:16px;flex-shrink:0}
+        .wf-tabs{display:flex;gap:4px;flex-wrap:wrap}
+        .wf-tab{
+            background:transparent;border:1px solid var(--border);color:var(--muted);
+            padding:8px 14px;cursor:pointer;border-radius:6px;font-family:inherit;
+            transition:.2s;font-size:12px;white-space:nowrap
+        }
+        .wf-tab:hover{color:var(--text);background:var(--surface2)}
+        .wf-tab.active{color:var(--blue);border-color:var(--blue);background:rgba(88,166,255,.1)}
+        .container{max-width:1200px;margin:0 auto;padding:20px}
+        .tab-content{display:none}
+        .tab-content.active{display:block}
+        .panel{
+            background:var(--surface);border:1px solid var(--border);border-radius:8px;
+            overflow:hidden;margin-bottom:16px
+        }
+        .panel-header{
+            background:var(--surface2);border-bottom:1px solid var(--border);
+            padding:12px 16px;display:flex;align-items:center;gap:8px;font-weight:bold
+        }
+        .ph-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+        .panel-body{padding:16px}
+        .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+        .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+        .tree-item{margin-left:20px;padding:8px;border-left:2px solid var(--border);cursor:pointer;transition:.2s}
+        .tree-item:hover{border-left-color:var(--blue);background:var(--surface2);border-radius:4px}
+        .tree-item.active{background:rgba(88,166,255,.1);border-left-color:var(--blue)}
+        .tree-item span{font-weight:bold;color:var(--blue)}
+        .tree-detail{margin:16px 0;padding:12px;background:var(--surface2);border-left:3px solid var(--blue);border-radius:4px}
+        .tree-detail-title{font-weight:bold;color:var(--blue);margin-bottom:8px}
+        .tree-detail-content{color:var(--muted);font-size:12px;line-height:1.5}
+        .kanban-board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+        .kanban-column{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px}
+        .kanban-header{font-weight:bold;color:var(--muted);margin-bottom:12px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+        .kanban-wip{font-size:10px;background:rgba(248,81,73,.2);color:#f85149;padding:2px 6px;border-radius:4px}
+        .kanban-card{
+            background:var(--surface);border:1px solid var(--border);padding:10px;border-radius:6px;
+            margin-bottom:10px;cursor:pointer;transition:.2s;font-size:12px
+        }
+        .kanban-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+        .kanban-card-title{font-weight:bold;color:var(--text);margin-bottom:6px}
+        .kanban-card-meta{display:flex;justify-content:space-between;align-items:center;font-size:10px}
+        .story-points{background:rgba(88,166,255,.2);color:var(--blue);padding:2px 6px;border-radius:4px}
+        .priority-high{color:#f85149;font-weight:bold}
+        .priority-medium{color:#e3b341;font-weight:bold}
+        .priority-low{color:#3fb950;font-weight:bold}
+        .avatar{width:20px;height:20px;border-radius:50%;background:var(--blue);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold}
+        .add-card-btn{
+            width:100%;padding:10px;border:1px dashed var(--border);border-radius:6px;
+            cursor:pointer;text-align:center;color:var(--muted);font-size:12px;
+            background:transparent;transition:.2s;font-family:inherit
+        }
+        .add-card-btn:hover{border-color:var(--blue);color:var(--blue)}
+        .comparison-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px}
+        .comparison-table th{
+            background:var(--surface2);color:var(--text);padding:10px;text-align:left;
+            border:1px solid var(--border);font-weight:bold;font-size:11px
+        }
+        .comparison-table td{
+            padding:10px;border:1px solid var(--border);background:var(--surface)
+        }
+        .comparison-table tr:nth-child(even) td{background:var(--surface2)}
+        .badge{
+            display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;
+            font-weight:bold;margin-right:4px;margin-bottom:4px
+        }
+        .badge.success{background:rgba(63,185,80,.2);color:var(--green)}
+        .badge.warning{background:rgba(210,153,34,.2);color:var(--yellow)}
+        .badge.error{background:rgba(248,81,73,.2);color:var(--red)}
+        .badge.blue{background:rgba(88,166,255,.2);color:var(--blue)}
+        .callout{
+            background:var(--surface);border-left:4px solid var(--blue);
+            padding:12px 16px;margin-bottom:16px;border-radius:4px;display:flex;gap:12px;align-items:flex-start;font-size:13px
+        }
+        .callout.warn{border-left-color:var(--yellow)}
+        .callout.success{border-left-color:var(--green)}
+        .callout.danger{border-left-color:var(--red)}
+        .callout.tip{border-left-color:var(--purple)}
+        .ci{font-size:18px;flex-shrink:0}
+        button{
+            background:rgba(63,185,80,.15);border:1px solid rgba(63,185,80,.3);color:var(--green);
+            padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px;
+            transition:.2s;font-weight:bold;margin-right:8px;margin-bottom:8px
+        }
+        button:hover{background:rgba(63,185,80,.25)}
+        button:active{transform:scale(.98)}
+        .terminal{
+            background:var(--surface);border:1px solid var(--border);border-radius:8px;
+            overflow:hidden;margin-bottom:16px;font-family:'Cascadia Code',monospace;font-size:12px
+        }
+        .tbar{
+            background:var(--surface2);border-bottom:1px solid var(--border);
+            padding:8px 12px;display:flex;align-items:center;gap:6px
+        }
+        .td{width:12px;height:12px;border-radius:50%;cursor:pointer}
+        .tlabel{margin-left:auto;font-size:11px;color:var(--muted)}
+        .tbody{padding:12px}
+        .tc{color:var(--green);margin-bottom:4px;white-space:pre-wrap}
+        .tc::before{content:"$ ";color:var(--green);font-weight:bold}
+        .to{color:var(--muted);margin-bottom:4px;white-space:pre-wrap}
+        .tok{color:var(--green);margin-bottom:4px}
+        .twarn{color:var(--yellow);margin-bottom:4px}
+        .terr{color:var(--red);margin-bottom:4px}
+        .burndown-chart{width:100%;max-width:400px;margin:16px auto;background:var(--surface2);padding:12px;border-radius:6px}
+        .velocity-chart{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}
+        .velocity-bar{display:flex;flex-direction:column;align-items:center}
+        .velocity-bar-value{height:120px;background:var(--blue);border-radius:4px 4px 0 0;margin-bottom:4px;display:flex;align-items:flex-end;justify-content:center;color:var(--text);font-weight:bold;font-size:11px}
+        .velocity-bar-label{color:var(--muted);font-size:10px}
+        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center}
+        .modal.active{display:flex}
+        .modal-content{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px;max-width:500px;width:90%}
+        .modal-header{font-weight:bold;color:var(--text);margin-bottom:12px;font-size:16px}
+        .modal-close{float:right;cursor:pointer;color:var(--muted);font-size:20px}
+        .form-group{margin-bottom:12px}
+        .form-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+        .form-group input{width:100%;padding:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;font-family:inherit;font-size:12px}
+        .step-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+        .step-pill{
+            background:rgba(88,166,255,.15);border:1px solid rgba(88,166,255,.3);
+            color:var(--blue);padding:6px 14px;border-radius:999px;font-size:12px;
+            cursor:pointer;transition:.2s
+        }
+        .step-pill.active{background:rgba(88,166,255,.3);color:var(--text)}
+        .step-pill:hover{background:rgba(88,166,255,.25)}
+        .table-view{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px}
+        .table-view th{background:var(--surface2);padding:8px;text-align:left;border-bottom:1px solid var(--border);font-weight:bold}
+        .table-view td{padding:8px;border-bottom:1px solid var(--border)}
+        .table-view tr:hover{background:var(--surface2)}
+        .code-block{
+            background:var(--surface2);border:1px solid var(--border);padding:12px;
+            border-radius:6px;overflow-x:auto;margin-bottom:16px;color:var(--blue);
+            font-family:'Cascadia Code',monospace;font-size:11px;line-height:1.4
+        }
+        .hint-box{
+            background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);
+            padding:12px 16px;border-radius:6px;margin-bottom:16px;color:var(--blue);font-size:12px
+        }
+        .wip-warning{
+            background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.3);
+            padding:12px 16px;border-radius:6px;color:#f85149;font-size:12px;margin-bottom:12px
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-logo">🔷 <span>MODULE 2 — Boards & Projects</span></div>
+        <div class="wf-tabs">
+            <button class="wf-tab active" onclick="showTab('hierarchy')">Work Item Hierarchy</button>
+            <button class="wf-tab" onclick="showTab('kanban')">Kanban Board</button>
+            <button class="wf-tab" onclick="showTab('sprints')">Sprints & Velocity</button>
+            <button class="wf-tab" onclick="showTab('github')">GitHub Projects</button>
+            <button class="wf-tab" onclick="showTab('linking')">Code Linking</button>
+            <button class="wf-tab" onclick="showTab('tips')">Exam Tips 🎯</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- TAB 1: Work Item Hierarchy -->
+        <div id="hierarchy" class="tab-content active">
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#bc8cff"></div>Work Item Type Hierarchy</div>
+                <div class="panel-body">
+                    <p style="margin-bottom:16px">Click on each level to see what fields it contains:</p>
+
+                    <div class="tree-item" onclick="showTreeDetail('epic')">
+                        <span>📊 EPIC</span> — Large, multi-quarter initiative
+                    </div>
+                    <div class="tree-item" onclick="showTreeDetail('feature')">
+                        <span style="margin-left:20px">🎯 FEATURE</span> — Major deliverable within an epic
+                    </div>
+                    <div class="tree-item" onclick="showTreeDetail('story')">
+                        <span style="margin-left:40px">📝 USER STORY</span> — End-user value, "As a... I want..."
+                    </div>
+                    <div class="tree-item" onclick="showTreeDetail('task')">
+                        <span style="margin-left:60px">✓ TASK</span> — Technical work item
+                    </div>
+                    <div class="tree-item" onclick="showTreeDetail('bug')">
+                        <span style="margin-left:60px">🐛 BUG</span> — Defect or issue
+                    </div>
+
+                    <div id="tree-detail"></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Real Example: E-Commerce Platform</div>
+                <div class="panel-body">
+                    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:12px;line-height:1.8;color:var(--muted)">
+                        <div style="color:var(--blue);font-weight:bold;margin-bottom:8px">📊 EPIC: E-Commerce Platform (Q1-Q3)</div>
+                        <div style="margin-left:20px;margin-bottom:8px">
+                            <div style="color:var(--green);font-weight:bold">🎯 FEATURE: Payment Processing</div>
+                            <div style="margin-left:20px">
+                                📝 USER STORY: Add Stripe integration for credit card payments<br/>
+                                <span style="margin-left:20px">✓ TASK: Implement Stripe API client<br/>
+                                ✓ TASK: Create payment validation service<br/>
+                                ✓ TASK: Add error handling and retry logic</span>
+                            </div>
+                        </div>
+                        <div style="margin-left:20px">
+                            <div style="color:#f85149;font-weight:bold">🎯 FEATURE: Shopping Cart</div>
+                            <div style="margin-left:20px">
+                                📝 USER STORY: Add items to cart and save for later<br/>
+                                <span style="margin-left:20px">✓ TASK: Build cart state management<br/>
+                                🐛 BUG: Cart loses items on page refresh</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Process Templates Comparison</div>
+                <div class="panel-body">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Template</th>
+                                <th>Best For</th>
+                                <th>Work Item Types</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Agile</strong></td>
+                                <td>Fast-moving, cross-functional teams</td>
+                                <td>Epic, Feature, User Story, Task, Bug</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Scrum</strong></td>
+                                <td>Fixed 2-week sprints, velocity tracking</td>
+                                <td>Epic, Feature, Product Backlog Item, Task, Bug</td>
+                            </tr>
+                            <tr>
+                                <td><strong>CMMI</strong></td>
+                                <td>Regulated industries, strict governance</td>
+                                <td>Epic, Feature, Requirement, Task, Bug, Review, Issue</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="callout info">
+                <span class="ci">ℹ️</span>
+                <span><strong>Nesting Rules:</strong> Epic contains Features, Features contain User Stories, User Stories contain Tasks/Bugs. You can't nest a Task under an Epic directly.</span>
+            </div>
+        </div>
+
+        <!-- TAB 2: Kanban Board -->
+        <div id="kanban" class="tab-content">
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Interactive Kanban Board</div>
+                <div class="panel-body">
+                    <p style="margin-bottom:12px">Drag cards to move between columns, or click them to move to the next column:</p>
+                    <div class="kanban-board">
+                        <div class="kanban-column">
+                            <div class="kanban-header">
+                                <span>📋 NEW</span>
+                                <span class="kanban-wip">5/∞</span>
+                            </div>
+                            <div class="kanban-card" onclick="moveCard(this)">
+                                <div class="kanban-card-title">Add user authentication</div>
+                                <div class="kanban-card-meta">
+                                    <span class="story-points">8 pts</span>
+                                    <span class="priority-high">P0</span>
+                                </div>
+                            </div>
+                            <div class="kanban-card" onclick="moveCard(this)">
+                                <div class="kanban-card-title">Implement payment gateway</div>
+                                <div class="kanban-card-meta">
+                                    <span class="story-points">13 pts</span>
+                                    <span class="priority-high">P0</span>
+                                </div>
+                            </div>
+                            <div class="kanban-card" onclick="moveCard(this)">
+                                <div class="kanban-card-title">Fix login validation</div>
+                                <div class="kanban-card-meta">
+                                    <span class="story-points">5 pts</span>
+                                    <span class="priority-medium">P1</span>
+                                </div>
+                            </div>
+                            <button class="add-card-btn" onclick="showAddCardForm()">+ Add Card</button>
+                        </div>
+
+                        <div class="kanban-column">
+                            <div class="kanban-header">
+                                <span>🚀 ACTIVE</span>
+                                <span class="kanban-wip" id="active-wip">2/3</span>
+                            </div>
+                            <div class="kanban-card" onclick="moveCard(this)">
+                                <div class="kanban-card-title">Design checkout UI</div>
+                                <div class="kanban-card-meta">
+                                    <span class="story-points">8 pts</span>
+                                    <span class="avatar">AB</span>
+                                </div>
+                            </div>
+                            <div class="kanban-card" onclick="moveCard(this)">
+                                <div class="kanban-card-title">Write unit tests</div>
+                                <div class="kanban-card-meta">
+                                    <span class="story-points">5 pts</span>
+                                    <span class="avatar">CD</span>
+                                </div>
+                            </div>
+                            <button class="add-card-btn">+ Add Card</button>
+                        </div>
+
+                        <div class="kanban-column">
+                            <div class="kanban-header">
+                                <span>✅ RESOLVED</span>
+                                <span class="kanban-wip">3/∞</span>
+                            </div>
+                            <div class="kanban-card" onclick="moveCard(this)">
+                                <div class="kanban-card-title">Setup CI/CD pipeline</div>
+                                <div class="kanban-card-meta">
+                                    <span class="story-points">13 pts</span>
+                                    <span class="badge success">Done</span>
+                                </div>
+                            </div>
+                            <div class="kanban-card" onclick="moveCard(this)">
+                                <div class="kanban-card-title">Database schema design</div>
+                                <div class="kanban-card-meta">
+                                    <span class="story-points">8 pts</span>
+                                    <span class="badge success">Done</span>
+                                </div>
+                            </div>
+                            <div class="kanban-card" onclick="moveCard(this)">
+                                <div class="kanban-card-title">API documentation</div>
+                                <div class="kanban-card-meta">
+                                    <span class="story-points">5 pts</span>
+                                    <span class="badge success">Done</span>
+                                </div>
+                            </div>
+                            <button class="add-card-btn">+ Add Card</button>
+                        </div>
+
+                        <div class="kanban-column">
+                            <div class="kanban-header">
+                                <span>🏁 CLOSED</span>
+                                <span class="kanban-wip">12/∞</span>
+                            </div>
+                            <div class="kanban-card" onclick="moveCard(this)" style="opacity:.7">
+                                <div class="kanban-card-title">Setup dev environment</div>
+                                <div class="kanban-card-meta">
+                                    <span class="story-points">3 pts</span>
+                                    <span class="badge blue">Closed</span>
+                                </div>
+                            </div>
+                            <div class="kanban-card" onclick="moveCard(this)" style="opacity:.7">
+                                <div class="kanban-card-title">Create GitHub repo</div>
+                                <div class="kanban-card-meta">
+                                    <span class="story-points">2 pts</span>
+                                    <span class="badge blue">Closed</span>
+                                </div>
+                            </div>
+                            <button class="add-card-btn" style="opacity:.5">+ Add Card</button>
+                        </div>
+                    </div>
+
+                    <div class="wip-warning" id="wip-message" style="display:none">
+                        ⚠️ WARNING: Active column has reached WIP limit (3)! Consider blocking new work or adding team members.
+                    </div>
+
+                    <div class="callout info">
+                        <span class="ci">ℹ️</span>
+                        <span><strong>Click any card to move it to the next column.</strong> Try it! WIP (Work In Progress) limits help prevent overload.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Sprint Burndown Chart</div>
+                <div class="panel-body">
+                    <div class="burndown-chart">
+                        <svg viewBox="0 0 350 200">
+                            <defs>
+                                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                    <polygon points="0 0, 10 3, 0 6" fill="#8b949e" />
+                                </marker>
+                            </defs>
+                            <line x1="30" y1="160" x2="330" y2="160" stroke="#30363d" stroke-width="1" marker-end="url(#arrowhead)"/>
+                            <line x1="30" y1="160" x2="30" y2="20" stroke="#30363d" stroke-width="1" marker-end="url(#arrowhead)"/>
+                            <text x="320" y="175" fill="#8b949e" font-size="10">Days</text>
+                            <text x="8" y="15" fill="#8b949e" font-size="10">Points</text>
+                            <polyline points="30,150 80,130 130,110 180,90 230,60 280,40 330,20" stroke="#3fb950" stroke-width="2" fill="none"/>
+                            <polyline points="30,150 80,140 130,135 180,130 230,130 280,130 330,130" stroke="#f85149" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+                            <circle cx="30" cy="150" r="3" fill="#3fb950"/>
+                            <circle cx="80" cy="130" r="3" fill="#3fb950"/>
+                            <circle cx="130" cy="110" r="3" fill="#3fb950"/>
+                            <circle cx="180" cy="90" r="3" fill="#3fb950"/>
+                            <circle cx="230" cy="60" r="3" fill="#3fb950"/>
+                            <circle cx="280" cy="40" r="3" fill="#3fb950"/>
+                            <circle cx="330" cy="20" r="3" fill="#3fb950"/>
+                            <text x="200" y="30" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="bold">Actual</text>
+                            <text x="200" y="145" fill="#f85149" font-size="11" font-weight="bold">Ideal</text>
+                        </svg>
+                    </div>
+                    <p style="color:var(--muted);font-size:12px;text-align:center;margin-top:12px">Sprint is on track! Team completed 80 pts of 100 target.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Sprints & Velocity -->
+        <div id="sprints" class="tab-content">
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Sprint Planning View</div>
+                <div class="panel-body">
+                    <div class="two-col">
+                        <div>
+                            <div style="font-weight:bold;color:var(--blue);margin-bottom:12px">📦 Product Backlog</div>
+                            <div class="kanban-card" style="cursor:grab">
+                                <div class="kanban-card-title">Implement OAuth 2.0</div>
+                                <div class="kanban-card-meta"><span class="story-points">13 pts</span></div>
+                            </div>
+                            <div class="kanban-card" style="cursor:grab">
+                                <div class="kanban-card-title">Add dark mode toggle</div>
+                                <div class="kanban-card-meta"><span class="story-points">8 pts</span></div>
+                            </div>
+                            <div class="kanban-card" style="cursor:grab">
+                                <div class="kanban-card-title">Optimize search performance</div>
+                                <div class="kanban-card-meta"><span class="story-points">5 pts</span></div>
+                            </div>
+                            <div class="kanban-card" style="cursor:grab">
+                                <div class="kanban-card-title">Mobile responsive design</div>
+                                <div class="kanban-card-meta"><span class="story-points">13 pts</span></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-weight:bold;color:var(--green);margin-bottom:12px">🎯 Sprint 14 Backlog (35 pts capacity)</div>
+                            <div class="kanban-card" style="background:rgba(63,185,80,.1);border-color:var(--green)">
+                                <div class="kanban-card-title">Implement OAuth 2.0</div>
+                                <div class="kanban-card-meta"><span class="story-points">13 pts</span><span class="badge success">Added</span></div>
+                            </div>
+                            <div class="kanban-card" style="background:rgba(63,185,80,.1);border-color:var(--green)">
+                                <div class="kanban-card-title">Add dark mode toggle</div>
+                                <div class="kanban-card-meta"><span class="story-points">8 pts</span><span class="badge success">Added</span></div>
+                            </div>
+                            <div class="kanban-card" style="background:rgba(63,185,80,.1);border-color:var(--green)">
+                                <div class="kanban-card-title">Optimize search performance</div>
+                                <div class="kanban-card-meta"><span class="story-points">5 pts</span><span class="badge success">Added</span></div>
+                            </div>
+                            <div style="color:var(--green);font-weight:bold;font-size:12px;margin-top:12px">Total: 26 / 35 pts</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Team Velocity (Last 4 Sprints)</div>
+                <div class="panel-body">
+                    <div class="velocity-chart">
+                        <div class="velocity-bar">
+                            <div class="velocity-bar-value" style="height:80px">32</div>
+                            <div class="velocity-bar-label">Sprint 11</div>
+                        </div>
+                        <div class="velocity-bar">
+                            <div class="velocity-bar-value" style="height:100px;background:var(--green)">41</div>
+                            <div class="velocity-bar-label">Sprint 12</div>
+                        </div>
+                        <div class="velocity-bar">
+                            <div class="velocity-bar-value" style="height:95px;background:var(--green)">39</div>
+                            <div class="velocity-bar-label">Sprint 13</div>
+                        </div>
+                        <div class="velocity-bar">
+                            <div class="velocity-bar-value" style="height:105px;background:#3fb950">43</div>
+                            <div class="velocity-bar-label">Sprint 14 (Current)</div>
+                        </div>
+                    </div>
+                    <p style="color:var(--muted);font-size:12px;text-align:center;margin-top:12px"><strong>Trend:</strong> Velocity increasing (32→43 pts). Team is becoming more efficient.</p>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#e3b341"></div>Sprint Capacity</div>
+                <div class="panel-body">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Team Member</th>
+                                <th>Capacity (hrs/day)</th>
+                                <th>Sprint Days</th>
+                                <th>Total Capacity</th>
+                                <th>Allocated</th>
+                                <th>Available</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Alice (Dev Lead)</td>
+                                <td>6</td>
+                                <td>10</td>
+                                <td>60 hrs</td>
+                                <td>55 hrs</td>
+                                <td style="color:var(--green)">5 hrs</td>
+                            </tr>
+                            <tr>
+                                <td>Bob (Backend)</td>
+                                <td>8</td>
+                                <td>10</td>
+                                <td>80 hrs</td>
+                                <td>75 hrs</td>
+                                <td style="color:var(--yellow)">5 hrs</td>
+                            </tr>
+                            <tr>
+                                <td>Carol (Frontend)</td>
+                                <td>8</td>
+                                <td>9</td>
+                                <td>72 hrs</td>
+                                <td>60 hrs</td>
+                                <td style="color:var(--green)">12 hrs</td>
+                            </tr>
+                            <tr>
+                                <td>David (QA)</td>
+                                <td>8</td>
+                                <td>10</td>
+                                <td>80 hrs</td>
+                                <td>70 hrs</td>
+                                <td style="color:var(--green)">10 hrs</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="color:var(--muted);font-size:12px;margin-top:12px">⚠️ Bob is near capacity. Consider prioritizing his tasks or bringing in support.</p>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#bc8cff"></div>Definition of Done Checklist</div>
+                <div class="panel-body">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                        <div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                                <input type="checkbox" checked disabled style="cursor:pointer;width:16px;height:16px">
+                                <span>Code review approved</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                                <input type="checkbox" checked disabled style="cursor:pointer;width:16px;height:16px">
+                                <span>Unit tests written (>80% coverage)</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                                <input type="checkbox" checked disabled style="cursor:pointer;width:16px;height:16px">
+                                <span>Integration tests pass</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                                <input type="checkbox" checked disabled style="cursor:pointer;width:16px;height:16px">
+                                <span>Documentation updated</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                                <input type="checkbox" checked disabled style="cursor:pointer;width:16px;height:16px">
+                                <span>Security audit passed</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                                <input type="checkbox" checked disabled style="cursor:pointer;width:16px;height:16px">
+                                <span>Performance benchmarks met</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                                <input type="checkbox" checked disabled style="cursor:pointer;width:16px;height:16px">
+                                <span>Deployed to staging</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                                <input type="checkbox" checked disabled style="cursor:pointer;width:16px;height:16px">
+                                <span>Ready for production</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: GitHub Projects -->
+        <div id="github" class="tab-content">
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>GitHub Projects Board View</div>
+                <div class="panel-body">
+                    <div style="margin-bottom:16px">
+                        <span class="step-pill active" onclick="switchView('board')">📋 Board View</span>
+                        <span class="step-pill" onclick="switchView('table')">📊 Table View</span>
+                    </div>
+
+                    <div id="board-view">
+                        <div class="kanban-board" style="grid-template-columns:repeat(3,1fr)">
+                            <div class="kanban-column">
+                                <div class="kanban-header"><span>📋 Todo</span></div>
+                                <div class="kanban-card">
+                                    <div class="kanban-card-title">#42: Add payment integration</div>
+                                    <div class="kanban-card-meta">
+                                        <span class="badge blue">Feature</span>
+                                        <span class="priority-high">P0</span>
+                                    </div>
+                                </div>
+                                <div class="kanban-card">
+                                    <div class="kanban-card-title">#51: Fix mobile layout</div>
+                                    <div class="kanban-card-meta">
+                                        <span class="badge warning">Bug</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kanban-column">
+                                <div class="kanban-header"><span>🚀 In Progress</span></div>
+                                <div class="kanban-card">
+                                    <div class="kanban-card-title">#38: Implement SSO</div>
+                                    <div class="kanban-card-meta">
+                                        <span class="badge blue">Feature</span>
+                                        <span class="avatar">AB</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kanban-column">
+                                <div class="kanban-header"><span>✅ Done</span></div>
+                                <div class="kanban-card" style="opacity:.7">
+                                    <div class="kanban-card-title">#35: Add dark mode</div>
+                                    <div class="kanban-card-meta">
+                                        <span class="badge success">Done</span>
+                                    </div>
+                                </div>
+                                <div class="kanban-card" style="opacity:.7">
+                                    <div class="kanban-card-title">#29: Fix API throttling</div>
+                                    <div class="kanban-card-meta">
+                                        <span class="badge success">Done</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="table-view" style="display:none">
+                        <table class="table-view">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Size</th>
+                                    <th>Sprint</th>
+                                    <th>Assignee</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#42: Add payment integration</td>
+                                    <td><span class="badge blue">Todo</span></td>
+                                    <td><span class="priority-high">P0</span></td>
+                                    <td>13 pts</td>
+                                    <td>Sprint 14</td>
+                                    <td><span class="avatar">AB</span></td>
+                                </tr>
+                                <tr>
+                                    <td>#38: Implement SSO</td>
+                                    <td><span class="badge blue">In Progress</span></td>
+                                    <td><span class="priority-high">P0</span></td>
+                                    <td>8 pts</td>
+                                    <td>Sprint 14</td>
+                                    <td><span class="avatar">CD</span></td>
+                                </tr>
+                                <tr>
+                                    <td>#51: Fix mobile layout</td>
+                                    <td><span class="badge blue">Todo</span></td>
+                                    <td><span class="priority-medium">P1</span></td>
+                                    <td>5 pts</td>
+                                    <td>Backlog</td>
+                                    <td>—</td>
+                                </tr>
+                                <tr>
+                                    <td>#35: Add dark mode</td>
+                                    <td><span class="badge success">Done</span></td>
+                                    <td><span class="priority-low">P2</span></td>
+                                    <td>8 pts</td>
+                                    <td>Sprint 13</td>
+                                    <td><span class="avatar">EF</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Custom Fields in GitHub Projects</div>
+                <div class="panel-body">
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+                        <div style="background:var(--surface2);padding:12px;border-radius:6px">
+                            <div style="font-weight:bold;color:var(--blue);margin-bottom:8px">Priority</div>
+                            <div style="color:var(--muted);font-size:12px">
+                                • P0 — Critical, blocks release<br/>
+                                • P1 — High, schedule soon<br/>
+                                • P2 — Medium, can defer<br/>
+                                • P3 — Low, nice-to-have
+                            </div>
+                        </div>
+                        <div style="background:var(--surface2);padding:12px;border-radius:6px">
+                            <div style="font-weight:bold;color:var(--green);margin-bottom:8px">Size (Story Points)</div>
+                            <div style="color:var(--muted);font-size:12px">
+                                • XS (1-2 pts)<br/>
+                                • S (3-5 pts)<br/>
+                                • M (8 pts)<br/>
+                                • L (13+ pts)
+                            </div>
+                        </div>
+                        <div style="background:var(--surface2);padding:12px;border-radius:6px">
+                            <div style="font-weight:bold;color:#e3b341;margin-bottom:8px">Status</div>
+                            <div style="color:var(--muted);font-size:12px">
+                                • Todo<br/>
+                                • In Progress<br/>
+                                • In Review<br/>
+                                • Done
+                            </div>
+                        </div>
+                        <div style="background:var(--surface2);padding:12px;border-radius:6px">
+                            <div style="font-weight:bold;color:#bc8cff;margin-bottom:8px">Sprint</div>
+                            <div style="color:var(--muted);font-size:12px">
+                                • Current sprint<br/>
+                                • Next sprint<br/>
+                                • Future sprints<br/>
+                                • Backlog
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#f85149"></div>GitHub Project Automation</div>
+                <div class="panel-body">
+                    <div class="terminal">
+                        <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">GitHub Project Rules</span></div>
+                        <div class="tbody">
+                            <div class="tc">Rule 1: When PR merges → close related issue</div>
+                            <div class="to">IF pull_request.merged THEN issue.status = "Done"</div>
+                            <div class="tc">Rule 2: New issue → add to backlog</div>
+                            <div class="to">IF issue.created AND NOT assigned THEN project.status = "Todo"</div>
+                            <div class="tc">Rule 3: When marked as draft → move to In Progress</div>
+                            <div class="to">IF pull_request.status = "draft" THEN project.status = "In Progress"</div>
+                            <div class="tok">✓ Auto-rules configured</div>
+                        </div>
+                    </div>
+
+                    <div class="callout success">
+                        <span class="ci">✅</span>
+                        <span><strong>Auto-Close Magic:</strong> When you merge a PR with "Closes #42" in the commit message, GitHub automatically closes issue #42 and updates the project board!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: Code Linking -->
+        <div id="linking" class="tab-content">
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Linking Work Items to Code</div>
+                <div class="panel-body">
+                    <p style="margin-bottom:16px">Traceability across your entire workflow:</p>
+
+                    <div class="terminal">
+                        <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — commit & link</span></div>
+                        <div class="tbody">
+                            <div class="tc">git checkout -b feature/AB-1234-add-cart</div>
+                            <div class="to">Switched to a new branch</div>
+                            <div style="margin:8px 0;padding:12px;background:var(--surface2);border-radius:4px;color:var(--blue)">
+                                <div style="font-weight:bold;margin-bottom:4px">← Branch name links to AB#1234</div>
+                                <div style="font-size:11px;color:var(--muted)">Azure Boards automatically recognizes the work item ID</div>
+                            </div>
+                            <div class="tc">vim src/cart.js</div>
+                            <div class="to"># Make changes...</div>
+                            <div class="tc">git add . && git commit -m "feat: add to cart functionality AB#1234"</div>
+                            <div class="to">[feature/AB-1234-add-cart abc1234] feat: add to cart AB#1234</div>
+                            <div style="margin:8px 0;padding:12px;background:var(--surface2);border-radius:4px;color:var(--blue)">
+                                <div style="font-weight:bold;margin-bottom:4px">← Commit message links to AB#1234</div>
+                                <div style="font-size:11px;color:var(--muted)">Azure Boards finds this commit in the work item history</div>
+                            </div>
+                            <div class="tc">git push origin feature/AB-1234-add-cart</div>
+                            <div class="to">To github.com:myorg/myapp.git</div>
+                            <div class="tc">gh pr create --title "Add to cart" --body "Closes #42"</div>
+                            <div style="margin:8px 0;padding:12px;background:var(--surface2);border-radius:4px;color:var(--blue)">
+                                <div style="font-weight:bold;margin-bottom:4px">← PR links to GitHub issue #42</div>
+                                <div style="font-size:11px;color:var(--muted)">When PR merges, GitHub auto-closes issue #42</div>
+                            </div>
+                            <div class="to">Created pull request #567</div>
+                            <div class="tok">✓ Full traceability chain established!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Traceability Chain</div>
+                <div class="panel-body">
+                    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:16px;font-size:12px;line-height:2">
+                        <div style="color:var(--blue);font-weight:bold">Azure Work Item</div>
+                        <div style="margin-left:20px;color:var(--muted)">AB#1234: "Add item to shopping cart"</div>
+                        <div style="margin:16px 0 0 0;color:var(--text)">↓</div>
+
+                        <div style="margin:16px 0 0 0;color:var(--blue);font-weight:bold">Git Branch</div>
+                        <div style="margin-left:20px;color:var(--muted)">feature/AB-1234-add-cart</div>
+                        <div style="margin:16px 0 0 0;color:var(--text)">↓</div>
+
+                        <div style="margin:16px 0 0 0;color:var(--green);font-weight:bold">Commit Messages</div>
+                        <div style="margin-left:20px;color:var(--muted)">"feat: add cart logic AB#1234"<br/>"refactor: cart service AB#1234"<br/>"docs: cart API AB#1234"</div>
+                        <div style="margin:16px 0 0 0;color:var(--text)">↓</div>
+
+                        <div style="margin:16px 0 0 0;color:var(--orange);font-weight:bold">GitHub Pull Request</div>
+                        <div style="margin-left:20px;color:var(--muted)">#567: "Add to cart functionality (closes #42)"</div>
+                        <div style="margin:16px 0 0 0;color:var(--text)">↓</div>
+
+                        <div style="margin:16px 0 0 0;color:#f85149;font-weight:bold">Build Pipeline</div>
+                        <div style="margin-left:20px;color:var(--muted)">GitHub Actions run tests (PASSED)</div>
+                        <div style="margin:16px 0 0 0;color:var(--text)">↓</div>
+
+                        <div style="margin:16px 0 0 0;color:var(--pink);font-weight:bold">Deployment</div>
+                        <div style="margin-left:20px;color:var(--muted)">Merged to main → Auto-deployed to production</div>
+                    </div>
+
+                    <div class="hint-box" style="margin-top:16px">
+                        <strong>Impact:</strong> You can now trace every feature from initial idea (work item) → code → build → deployment. Full audit trail!
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#bc8cff"></div>Branch Naming Conventions (Azure Boards)</div>
+                <div class="panel-body">
+                    <div class="code-block">
+# Format: &lt;type&gt;/&lt;workitem-id&gt;-&lt;description&gt;<br/>
+<br/>
+# Examples:<br/>
+feature/AB-1234-add-payment         # Feature implementation<br/>
+bugfix/AB-5678-fix-login-timeout    # Bug fix<br/>
+chore/AB-9012-update-dependencies   # Chore/maintenance<br/>
+refactor/AB-3456-service-layer      # Refactoring<br/>
+docs/AB-7890-api-documentation      # Documentation<br/>
+<br/>
+# Git workflow:<br/>
+git checkout -b feature/AB-1234-add-payment<br/>
+# Make changes...<br/>
+git commit -m "feat: payment processing AB#1234"<br/>
+git push origin feature/AB-1234-add-payment<br/>
+# Create PR, which auto-links to AB#1234
+                    </div>
+
+                    <p style="color:var(--muted);font-size:12px;">Azure Boards automatically recognizes the work item ID (AB#1234) in your branch name and commit messages, creating automatic links.</p>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>GitHub Issue Auto-Close</div>
+                <div class="panel-body">
+                    <div class="code-block">
+# When you merge a PR with these keywords in the description/title,<br/>
+# GitHub automatically closes the related issue(s):<br/>
+<br/>
+Closes #42<br/>
+Fixes #42<br/>
+Resolves #42<br/>
+Close #42<br/>
+Fix #42<br/>
+Resolve #42<br/>
+<br/>
+# Example PR description:<br/>
+## Description<br/>
+Added shopping cart functionality to the store.<br/>
+<br/>
+## Closes<br/>
+Closes #42     # Auto-closes when PR merges<br/>
+Closes #51<br/>
+<br/>
+# Result: When you merge PR #567, issues #42 and #51 automatically<br/>
+# move to "Closed" status and update the project board!
+                    </div>
+
+                    <div class="callout tip">
+                        <span class="ci">💡</span>
+                        <span><strong>Pro Tip:</strong> Use "Closes" keywords in PR descriptions for automatic issue closure. Saves manual status updates!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: Exam Tips -->
+        <div id="tips" class="tab-content">
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#d29922"></div>AZ-400 Exam Focus — Module 2</div>
+                <div class="panel-body">
+                    <div class="callout warn">
+                        <span class="ci">⚠️</span>
+                        <span><strong>Exam Weight:</strong> Module 2 covers ~15-20% of AZ-400. Know the hierarchy and board concepts deeply.</span>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <div style="font-weight:bold;color:var(--blue);margin-bottom:8px">1. Work Item Hierarchy</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            • Understand Epic → Feature → Story → Task nesting<br/>
+                            • Know the difference between User Story and Task<br/>
+                            • Understand work item states: New, Active, Resolved, Closed<br/>
+                            • Know which process templates exist (Agile, Scrum, CMMI)
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <div style="font-weight:bold;color:var(--green);margin-bottom:8px">2. Azure Boards</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            • Kanban board: New, Active, Resolved, Closed<br/>
+                            • WIP (Work In Progress) limits and why they matter<br/>
+                            • Sprint planning and capacity planning<br/>
+                            • Velocity tracking across sprints<br/>
+                            • Definition of Done concept<br/>
+                            • Work item linking and parent-child relationships
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <div style="font-weight:bold;color:var(--yellow);margin-bottom:8px">3. GitHub Projects (Modern Alternative)</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            • GitHub Issues and Projects (newly improved)<br/>
+                            • Custom fields in projects<br/>
+                            • Table view vs. Board view<br/>
+                            • Auto-linking issues to PRs using "Closes #42" keyword<br/>
+                            • Difference between GitHub Issues and Azure Boards work items
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-weight:bold;color:#f85149;margin-bottom:8px">4. Code-to-Work Item Traceability</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            • Branch naming conventions (feature/AB-1234-desc)<br/>
+                            • Commit message linking (AB#1234 in message)<br/>
+                            • PR to issue linking (Closes #42)<br/>
+                            • Traceability chain: Work Item → Branch → Commit → PR → Build → Release<br/>
+                            • Why this matters: audit trail, regulatory compliance
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#f85149"></div>Common Exam Traps</div>
+                <div class="panel-body">
+                    <div style="margin-bottom:16px;background:var(--surface2);padding:12px;border-radius:6px">
+                        <div style="font-weight:bold;color:#f85149;margin-bottom:6px">❌ TRAP: Epic and Feature are the same</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            <strong>Reality:</strong> Epic is strategic (6-12 months), Feature is tactical (1-3 months). Features roll up to Epics.
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:16px;background:var(--surface2);padding:12px;border-radius:6px">
+                        <div style="font-weight:bold;color:#f85149;margin-bottom:6px">❌ TRAP: WIP limits are optional</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            <strong>Reality:</strong> WIP limits prevent team overload and force finishing work before starting new work (Kanban principle).
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:16px;background:var(--surface2);padding:12px;border-radius:6px">
+                        <div style="font-weight:bold;color:#f85149;margin-bottom:6px">❌ TRAP: Story Points = Hours</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            <strong>Reality:</strong> Story points measure complexity/effort, not time. 8 points ≠ 8 hours. Use velocity to estimate sprints.
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:16px;background:var(--surface2);padding:12px;border-radius:6px">
+                        <div style="font-weight:bold;color:#f85149;margin-bottom:6px">❌ TRAP: GitHub Projects and Azure Boards are the same</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            <strong>Reality:</strong> Azure Boards is enterprise-grade with sprints, velocity, test plans. GitHub Projects is simpler, integrated with code.
+                        </div>
+                    </div>
+
+                    <div style="background:var(--surface2);padding:12px;border-radius:6px">
+                        <div style="font-weight:bold;color:#f85149;margin-bottom:6px">❌ TRAP: Branch naming doesn't matter</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            <strong>Reality:</strong> Branch names should include work item ID (AB-1234) for automatic linking and traceability.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Key Exam Questions to Prepare For</div>
+                <div class="panel-body">
+                    <div style="background:var(--surface2);padding:12px;border-radius:6px;margin-bottom:12px">
+                        <div style="font-weight:bold;color:var(--blue);margin-bottom:6px">Q: When should you use WIP limits?</div>
+                        <div style="color:var(--muted);font-size:12px">A: Always on Kanban boards to prevent overload and enforce completion before starting new work.</div>
+                    </div>
+
+                    <div style="background:var(--surface2);padding:12px;border-radius:6px;margin-bottom:12px">
+                        <div style="font-weight:bold;color:var(--blue);margin-bottom:6px">Q: What's the difference between Sprint capacity and velocity?</div>
+                        <div style="color:var(--muted);font-size:12px">A: Capacity is available hours (team size × sprint days). Velocity is actual story points completed (historical average).</div>
+                    </div>
+
+                    <div style="background:var(--surface2);padding:12px;border-radius:6px;margin-bottom:12px">
+                        <div style="font-weight:bold;color:var(--blue);margin-bottom:6px">Q: How do you link GitHub issues to Azure Boards work items?</div>
+                        <div style="color:var(--muted);font-size:12px">A: Use branch naming (AB-1234) and commit messages (AB#1234). Some teams use third-party integrations for two-way sync.</div>
+                    </div>
+
+                    <div style="background:var(--surface2);padding:12px;border-radius:6px">
+                        <div style="font-weight:bold;color:var(--blue);margin-bottom:6px">Q: What's the minimum Definition of Done?</div>
+                        <div style="color:var(--muted);font-size:12px">A: Code reviewed, tests written, documentation updated, deployed to staging. No shortcutting!</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hint-box">
+                <strong>Exam Pro Tip:</strong> Questions often focus on "what should the team do" scenarios. Remember: WIP limits prevent chaos, velocity predicts capacity, and traceability enables compliance.
+            </div>
+        </div>
+    </div>
+
+    <div id="add-card-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div class="modal-header">Add New Card</div>
+            <div class="form-group">
+                <label>Card Title</label>
+                <input type="text" placeholder="Enter card title">
+            </div>
+            <div class="form-group">
+                <label>Story Points</label>
+                <input type="number" placeholder="5" value="5">
+            </div>
+            <button onclick="addNewCard()" style="width:100%;margin-top:12px">✓ Add Card</button>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.wf-tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showTreeDetail(type) {
+            const details = {
+                epic: {
+                    title: 'EPIC',
+                    fields: 'Title, Description, Priority, Timeline (Quarters), Linked Features, Business Value, Risk',
+                    example: '"E-Commerce Platform" — organization-wide, 6-12 month initiative'
+                },
+                feature: {
+                    title: 'FEATURE',
+                    fields: 'Title, Description, Priority, Owner, Acceptance Criteria, Parent Epic, Linked User Stories',
+                    example: '"Checkout Flow" — part of E-Commerce Epic, 1-3 month delivery'
+                },
+                story: {
+                    title: 'USER STORY',
+                    fields: 'Title, Description (As a...I want...), Acceptance Criteria, Story Points, Priority, Owner, Parent Feature, Tasks/Bugs',
+                    example: '"As a customer, I want to save my payment method for faster checkout"'
+                },
+                task: {
+                    title: 'TASK',
+                    fields: 'Title, Description, Effort Hours, Owner, Priority, Parent Story, Dependencies',
+                    example: '"Write unit tests for payment validation" — technical, 4-8 hours'
+                },
+                bug: {
+                    title: 'BUG',
+                    fields: 'Title, Steps to Reproduce, Expected vs. Actual, Priority, Severity, Environment, Owner, Parent Story',
+                    example: '"Login fails with special characters in password"'
+                }
+            };
+
+            const d = details[type];
+            document.getElementById('tree-detail').innerHTML = `
+                <div class="tree-detail">
+                    <div class="tree-detail-title">${d.title}</div>
+                    <div class="tree-detail-content">
+                        <div style="margin-bottom:8px"><strong>Fields:</strong> ${d.fields}</div>
+                        <div><strong>Example:</strong> ${d.example}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function moveCard(card) {
+            const columns = document.querySelectorAll('.kanban-column');
+            const currentCol = card.parentElement;
+            const currentIndex = Array.from(columns).indexOf(currentCol);
+
+            if (currentIndex < columns.length - 1) {
+                columns[currentIndex + 1].appendChild(card);
+                checkWIPLimits();
+            }
+        }
+
+        function checkWIPLimits() {
+            const activeCol = document.querySelectorAll('.kanban-column')[1];
+            const cardCount = activeCol.querySelectorAll('.kanban-card').length;
+            const wipWarning = document.getElementById('wip-message');
+
+            if (cardCount > 3) {
+                wipWarning.style.display = 'block';
+                document.getElementById('active-wip').textContent = `${cardCount}/3`;
+                document.getElementById('active-wip').style.background = 'rgba(248,81,73,.3)';
+                document.getElementById('active-wip').style.color = '#f85149';
+            } else {
+                wipWarning.style.display = 'none';
+                document.getElementById('active-wip').textContent = `${cardCount}/3`;
+                document.getElementById('active-wip').style.background = '';
+                document.getElementById('active-wip').style.color = '';
+            }
+        }
+
+        function showAddCardForm() {
+            document.getElementById('add-card-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('add-card-modal').classList.remove('active');
+        }
+
+        function addNewCard() {
+            const title = document.querySelector('.modal-content input[type="text"]').value;
+            const points = document.querySelector('.modal-content input[type="number"]').value;
+
+            if (title.trim()) {
+                const newCard = document.createElement('div');
+                newCard.className = 'kanban-card';
+                newCard.innerHTML = `
+                    <div class="kanban-card-title">${title}</div>
+                    <div class="kanban-card-meta">
+                        <span class="story-points">${points} pts</span>
+                        <span class="priority-medium">P1</span>
+                    </div>
+                `;
+                newCard.onclick = function() { moveCard(this); };
+                document.querySelectorAll('.kanban-column')[0].appendChild(newCard);
+                closeModal();
+            }
+        }
+
+        function switchView(view) {
+            document.getElementById('board-view').style.display = view === 'board' ? 'block' : 'none';
+            document.getElementById('table-view').style.display = view === 'table' ? 'block' : 'none';
+
+            document.querySelectorAll('.step-pill').forEach(pill => pill.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-400 Module 7 — Repository Management & Security</title>
+  <style>
+    :root{
+      --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+      --text:#e6edf3;--muted:#8b949e;
+      --green:#3fb950;--blue:#58a6ff;--red:#f85149;--yellow:#d29922;
+      --orange:#e3b341;--purple:#bc8cff;--pink:#f778ba;--teal:#39d353;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;}
+    body{background:var(--bg);color:var(--text);font-family:'Cascadia Code','Fira Code',monospace,system-ui;line-height:1.6;}
+    .header{background:var(--surface);border-bottom:1px solid var(--border);padding:20px;text-align:center;}
+    .header h1{font-size:28px;margin-bottom:8px;}
+    .header p{color:var(--muted);font-size:14px;}
+    .container{display:flex;height:calc(100vh - 100px);}
+    .tabs{width:200px;background:var(--surface2);border-right:1px solid var(--border);padding:0;display:flex;flex-direction:column;}
+    .tab-button{padding:12px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;text-align:left;font-size:13px;border-left:2px solid transparent;transition:.2s;}
+    .tab-button:hover{background:var(--surface);color:var(--text);}
+    .tab-button.active{background:var(--surface);color:var(--text);border-left-color:var(--blue);font-weight:bold;}
+    .content{flex:1;overflow-y:auto;padding:30px;}
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
+    .terminal{background:var(--surface2);border:1px solid var(--border);border-radius:6px;margin:15px 0;overflow:hidden;font-size:12px;}
+    .tbar{display:flex;align-items:center;background:var(--surface);padding:8px 12px;border-bottom:1px solid var(--border);}
+    .td{width:12px;height:12px;border-radius:50%;margin-right:8px;}
+    .tlabel{color:var(--muted);font-size:11px;margin-left:auto;}
+    .tbody{padding:12px;}
+    .tc{color:var(--text);margin:8px 0;word-break:break-all;}
+    .to{color:var(--muted);margin:4px 0 8px 16px;font-size:11px;}
+    .tok{color:var(--green);margin:4px 0 8px 16px;font-weight:bold;}
+    .twarn{color:var(--yellow);margin:4px 0 8px 16px;}
+    .terr{color:var(--red);margin:4px 0 8px 16px;font-weight:bold;}
+    .callout{display:flex;align-items:center;gap:12px;padding:12px;border-left:4px solid;border-radius:4px;margin:15px 0;background:var(--surface2);}
+    .callout.info{border-color:var(--blue);background:rgba(88,166,255,.1);}
+    .callout.warn{border-color:var(--yellow);background:rgba(210,153,34,.1);}
+    .callout.success{border-color:var(--green);background:rgba(63,185,80,.1);}
+    .callout.danger{border-color:var(--red);background:rgba(248,81,73,.1);}
+    .callout.tip{border-color:var(--purple);background:rgba(188,140,255,.1);}
+    .ci{font-size:18px;flex-shrink:0;}
+    .matrix{display:grid;grid-template-columns:120px repeat(5, 1fr);gap:1px;background:var(--border);padding:1px;border-radius:4px;margin:15px 0;}
+    .matrix > div{background:var(--surface2);padding:8px;text-align:center;font-size:12px;}
+    .matrix > div:nth-child(1){background:var(--surface);font-weight:bold;}
+    .matrix > div:nth-child(-n+6){background:var(--surface);font-weight:bold;}
+    .checkmark{color:var(--green);}
+    .cross{color:var(--red);}
+    .role-button{padding:8px 16px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;border-radius:4px;margin:4px;font-size:12px;transition:.2s;}
+    .role-button:hover{background:var(--surface2);}
+    .role-button.selected{background:var(--blue);border-color:var(--blue);}
+    .code-block{background:var(--surface2);border:1px solid var(--border);padding:12px;border-radius:4px;margin:15px 0;overflow-x:auto;font-size:12px;}
+    .highlight{color:var(--yellow);}
+    .table-wrapper{overflow-x:auto;margin:15px 0;}
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    table th{background:var(--surface);border:1px solid var(--border);padding:8px;text-align:left;font-weight:bold;}
+    table td{border:1px solid var(--border);padding:8px;}
+    table tr:nth-child(even){background:var(--surface2);}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin:15px 0;}
+    .card{background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;}
+    .card h3{color:var(--blue);margin-bottom:8px;font-size:14px;}
+    .card p{font-size:12px;color:var(--muted);}
+    .file-view{background:var(--surface2);border:1px solid var(--border);padding:12px;border-radius:4px;margin:15px 0;font-size:11px;}
+    .file-name{color:var(--blue);font-weight:bold;margin-bottom:8px;}
+    h2{color:var(--blue);margin-top:20px;margin-bottom:12px;font-size:18px;}
+    h3{color:var(--text);margin-top:15px;margin-bottom:8px;font-size:15px;}
+    h4{color:var(--muted);margin-top:10px;margin-bottom:6px;font-size:13px;}
+    p{margin-bottom:10px;font-size:13px;}
+    ul,ol{margin:10px 0 10px 20px;font-size:13px;}
+    li{margin:5px 0;}
+    a{color:var(--blue);text-decoration:none;}
+    a:hover{text-decoration:underline;}
+    .comparison{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0;}
+    .comparison > div{background:var(--surface2);border:1px solid var(--border);padding:12px;border-radius:4px;}
+    .comparison h3{margin-top:0;}
+    .pros{color:var(--green);}
+    .cons{color:var(--red);}
+    button{cursor:pointer;}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>AZ-400 Module 7 — Repository Management & Security</h1>
+    <p>Interactive deep dive into Git workflows, LFS, secrets management, and DevOps practices</p>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-button active" onclick="switchTab(0)">Permissions Model</button>
+      <button class="tab-button" onclick="switchTab(1)">Git LFS</button>
+      <button class="tab-button" onclick="switchTab(2)">Purging Secrets</button>
+      <button class="tab-button" onclick="switchTab(3)">Monorepo vs Multi-repo</button>
+      <button class="tab-button" onclick="switchTab(4)">Dependencies</button>
+      <button class="tab-button" onclick="switchTab(5)">Exam Tips 🎯</button>
+    </div>
+
+    <div class="content">
+      <!-- TAB 1: Permissions Model -->
+      <div class="tab-panel active">
+        <h2>Repository Permissions Model</h2>
+        <p>Understanding role-based access control (RBAC) in GitHub and Azure DevOps is critical for secure repository management.</p>
+
+        <h3>GitHub Permissions Hierarchy</h3>
+        <div class="grid">
+          <button class="role-button" onclick="highlightRole('read')">Read</button>
+          <button class="role-button" onclick="highlightRole('triage')">Triage</button>
+          <button class="role-button" onclick="highlightRole('write')">Write</button>
+          <button class="role-button" onclick="highlightRole('maintain')">Maintain</button>
+          <button class="role-button" onclick="highlightRole('admin')">Admin</button>
+        </div>
+        <div id="role-details" style="background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;margin:15px 0;">
+          <p style="color:var(--muted);">Click a role above to see capabilities</p>
+        </div>
+
+        <h3>Permission Matrix: GitHub vs Azure DevOps</h3>
+        <div class="table-wrapper">
+          <table>
+            <tr>
+              <th>Capability</th>
+              <th style="background:var(--surface);">GitHub Read</th>
+              <th style="background:var(--surface);">GitHub Write</th>
+              <th style="background:var(--surface);">ADO Reader</th>
+              <th style="background:var(--surface);">ADO Contributor</th>
+            </tr>
+            <tr>
+              <td>View repo & code</td>
+              <td class="checkmark">✓</td><td class="checkmark">✓</td><td class="checkmark">✓</td><td class="checkmark">✓</td>
+            </tr>
+            <tr>
+              <td>Clone & pull</td>
+              <td class="checkmark">✓</td><td class="checkmark">✓</td><td class="checkmark">✓</td><td class="checkmark">✓</td>
+            </tr>
+            <tr>
+              <td>Create issues & PR</td>
+              <td class="checkmark">✓</td><td class="checkmark">✓</td><td class="checkmark">✓</td><td class="checkmark">✓</td>
+            </tr>
+            <tr>
+              <td>Push to branches</td>
+              <td class="cross">✗</td><td class="checkmark">✓</td><td class="cross">✗</td><td class="checkmark">✓</td>
+            </tr>
+            <tr>
+              <td>Merge PRs</td>
+              <td class="cross">✗</td><td class="checkmark">✓</td><td class="cross">✗</td><td class="checkmark">✓</td>
+            </tr>
+            <tr>
+              <td>Manage branches</td>
+              <td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td>
+            </tr>
+            <tr>
+              <td>Repo settings</td>
+              <td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td>
+            </tr>
+            <tr>
+              <td>Manage security</td>
+              <td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td><td class="cross">✗</td>
+            </tr>
+          </table>
+        </div>
+
+        <h3>CODEOWNERS for Required Reviews</h3>
+        <div class="file-view">
+          <div class="file-name">CODEOWNERS</div>
+          <div># Global owners<br>* @core-team<br><br># Infrastructure team owns deployment<br>/deployment/ @infra-team<br><br># Security team reviews auth changes<br>/auth/ @security-team<br><br># Each frontend file needs 2 approvals<br>/src/components/ @ui-team @product-lead</div>
+        </div>
+
+        <div class="callout info">
+          <span class="ci">ℹ️</span>
+          <span><strong>CODEOWNERS Flow:</strong> When PRs modify listed files, GitHub automatically requests review from specified teams. Merge is blocked until CODEOWNERS approve.</span>
+        </div>
+
+        <h3>Protected Branches + Branch Rules</h3>
+        <div class="code-block">
+          Branch: <span class="highlight">main</span><br><br>
+          ✓ Require pull request reviews before merging (2 reviewers)<br>
+          ✓ Require code owner reviews<br>
+          ✓ Require status checks to pass (CI/CD)<br>
+          ✓ Require branches to be up to date<br>
+          ✓ Dismiss stale pull request approvals<br>
+          ✓ Require approval of the latest commits<br>
+          ✗ Allow force pushes (DISABLED)<br>
+          ✗ Allow deletions (DISABLED)<br>
+        </div>
+
+        <div class="callout danger">
+          <span class="ci">🚫</span>
+          <span><strong>Admin Override:</strong> Even with branch protection, repo admins can force push. Minimize admin count!</span>
+        </div>
+      </div>
+
+      <!-- TAB 2: Git LFS -->
+      <div class="tab-panel">
+        <h2>Git Large File Storage (LFS)</h2>
+        <p>Git is designed for source code (text), not large binary files. LFS solves the repo bloat problem.</p>
+
+        <h3>The Problem: Repo Bloat</h3>
+        <div class="comparison">
+          <div>
+            <h4>Without LFS (Traditional Git)</h4>
+            <p class="cons">❌ Large binaries stored in git history</p>
+            <p class="cons">❌ Every clone downloads full history (2.3 GB)</p>
+            <p class="cons">❌ Slow clones, pushes, and pulls</p>
+            <p class="cons">❌ Difficulty pruning history</p>
+            <p>Example: PSD file (500 MB) × 10 commits = 5 GB history</p>
+          </div>
+          <div>
+            <h4>With LFS (Recommended)</h4>
+            <p class="pros">✓ Pointers stored in git (text files, ~200 bytes)</p>
+            <p class="pros">✓ Large files stored on LFS server</p>
+            <p class="pros">✓ Only needed files downloaded on checkout</p>
+            <p class="pros">✓ Repo size: 45 MB + separate LFS storage</p>
+            <p>Same 10 commits PSD = 45 MB git + LFS server</p>
+          </div>
+        </div>
+
+        <h3>LFS Architecture Diagram</h3>
+        <div style="background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;margin:15px 0;text-align:center;color:var(--muted);">
+          Developer → <span style="color:var(--blue);">git push</span> → Git Repo (pointers) + LFS Server (files)<br>
+          <br>
+          When you <span style="color:var(--yellow);">git pull</span>: Git downloads pointer, then LFS downloads actual file
+        </div>
+
+        <h3>Setup Walkthrough</h3>
+        <div class="terminal">
+          <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — ~/project</span></div>
+          <div class="tbody">
+            <div class="tc">$ git lfs install</div>
+            <div class="to">Git LFS initialized.</div>
+            <div class="tok">✓ Hooks installed</div>
+            <br>
+            <div class="tc">$ git lfs track "*.psd" "*.zip" "*.jar"</div>
+            <div class="to">Tracking *.psd</div>
+            <div class="to">Tracking *.zip</div>
+            <div class="to">Tracking *.jar</div>
+            <div class="to">Updated .gitattributes</div>
+            <div class="tok">✓ Track patterns added</div>
+            <br>
+            <div class="tc">$ git add .gitattributes</div>
+            <div class="tc">$ git add design.psd large-file.zip</div>
+            <div class="tc">$ git commit -m "add design and artifacts"</div>
+            <div class="to">[main abc1234] add design and artifacts</div>
+            <div class="tok">✓ Files tracked with LFS</div>
+            <br>
+            <div class="tc">$ git push origin main</div>
+            <div class="to">Uploading LFS objects: 100%</div>
+            <div class="tok">✓ LFS server received files</div>
+          </div>
+        </div>
+
+        <h3>Pointer File Format</h3>
+        <div class="file-view">
+          <div class="file-name">.gitattributes</div>
+          <div>*.psd filter=lfs diff=lfs merge=lfs -text<br>*.zip filter=lfs diff=lfs merge=lfs -text<br>*.jar filter=lfs diff=lfs merge=lfs -text</div>
+        </div>
+
+        <div class="file-view">
+          <div class="file-name">design.psd (what's actually stored in git)</div>
+          <div>version https://git-lfs.github.com/spec/v1<br>oid sha256:4d967a2422f6<br>size 512000000</div>
+        </div>
+
+        <h3>Size Comparison</h3>
+        <table style="margin:15px 0;">
+          <tr><th>Scenario</th><th>Without LFS</th><th>With LFS</th><th>Savings</th></tr>
+          <tr><td>Clone repo (1 latest PSD)</td><td>2.3 GB</td><td>45 MB git + stream PSD</td><td>98% smaller</td></tr>
+          <tr><td>Full history with 10 versions</td><td>5 GB</td><td>45 MB git + 2.5 GB LFS</td><td>99.2% on git</td></tr>
+          <tr><td>Checkout latest only</td><td>2.3 GB</td><td>45 MB git + 500 MB PSD</td><td>78% smaller</td></tr>
+        </table>
+
+        <h3>Migration: Existing Large Files</h3>
+        <div class="terminal">
+          <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — ~/project</span></div>
+          <div class="tbody">
+            <div class="tc">$ git lfs migrate import --include="*.zip,*.jar" --yes</div>
+            <div class="to">migrate: Sorting commits: ..., done</div>
+            <div class="to">migrate: Rewriting commits: 100%</div>
+            <div class="tok">✓ All .zip and .jar files converted to LFS pointers</div>
+            <br>
+            <div class="tc">$ git push origin --force main</div>
+            <div class="twarn">⚠️ Force push required after migration</div>
+            <div class="tok">✓ History rewritten with LFS pointers</div>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <span class="ci">⚠️</span>
+          <span><strong>Force Push Warning:</strong> LFS migration rewrites history. All collaborators must re-clone after force push!</span>
+        </div>
+      </div>
+
+      <!-- TAB 3: Purging Secrets -->
+      <div class="tab-panel">
+        <h2>Purging Secrets from History</h2>
+        <p>The absolute worst scenario: developer commits an API key, token, or credential to git. History is permanent—deletion doesn't help!</p>
+
+        <h3>The Danger: Why Simple Deletion Fails</h3>
+        <div class="terminal">
+          <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — ~/project</span></div>
+          <div class="tbody">
+            <div class="tc">$ git log --all --full-history</div>
+            <div class="to">abc1234 Remove API key from .env</div>
+            <div class="to">def5678 Add production config</div>
+            <div class="to">  SECRET_KEY=sk_live_super_secret_12345</div>
+            <div class="terr">✗ Secret still exists in commit def5678 history!</div>
+            <br>
+            <div class="tc">$ git show def5678:.env</div>
+            <div class="to">SECRET_KEY=sk_live_super_secret_12345</div>
+            <div class="terr">✗ Anyone with git history can extract the secret</div>
+          </div>
+        </div>
+
+        <div class="callout danger">
+          <span class="ci">🚫</span>
+          <span><strong>CRITICAL:</strong> Secret is ALREADY compromised. Rotate/revoke it IMMEDIATELY on the service before touching git history!</span>
+        </div>
+
+        <h3>Solution 1: git filter-repo (Recommended)</h3>
+        <p>Rewrite entire git history to remove sensitive files.</p>
+        <div class="terminal">
+          <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — ~/project</span></div>
+          <div class="tbody">
+            <div class="tc">$ pip install git-filter-repo</div>
+            <div class="tok">✓ Installed</div>
+            <br>
+            <div class="tc">$ git filter-repo --path .env --invert-paths</div>
+            <div class="to">Filtering commits: 100%</div>
+            <div class="to">Rewriting commits: 100%</div>
+            <div class="tok">✓ .env removed from all history</div>
+            <br>
+            <div class="tc">$ git push origin --force --all</div>
+            <div class="twarn">⚠️ Force push to notify all collaborators</div>
+            <div class="tok">✓ Remote updated with cleaned history</div>
+          </div>
+        </div>
+
+        <h3>Solution 2: BFG Repo Cleaner</h3>
+        <p>Faster alternative for specific patterns.</p>
+        <div class="terminal">
+          <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — ~/project</span></div>
+          <div class="tbody">
+            <div class="tc">$ java -jar bfg.jar --delete-files .env</div>
+            <div class="to">Removed .env from 5 commits</div>
+            <div class="to">History rewritten</div>
+            <div class="tok">✓ Done (usually faster than filter-repo)</div>
+            <br>
+            <div class="tc">$ git reflog expire --all --expire=now</div>
+            <div class="tc">$ git gc --prune=now --aggressive</div>
+            <div class="to">Repacking repository...</div>
+            <div class="tok">✓ Garbage collected</div>
+          </div>
+        </div>
+
+        <h3>After Purging: All Collaborators Must Re-clone</h3>
+        <div class="callout warn">
+          <span class="ci">⚠️</span>
+          <span><strong>Impact:</strong> Force push breaks all existing local clones. Team must run: <code>git clone &lt;repo&gt;</code> to get cleaned history. Rebasing existing PRs will fail!</span>
+        </div>
+
+        <h3>Prevention: Secrets Never Enter Git</h3>
+        <div class="grid">
+          <div class="card">
+            <h3>.gitignore</h3>
+            <p>Never commit secrets:</p>
+            <div style="background:var(--bg);padding:8px;border-radius:3px;margin-top:8px;font-size:11px;">
+              .env<br>.env.local<br>*.key<br>secrets/
+            </div>
+          </div>
+          <div class="card">
+            <h3>GitHub Secrets Scanner</h3>
+            <p>Auto-detect leaked credentials in pushes</p>
+            <div style="background:var(--bg);padding:8px;border-radius:3px;margin-top:8px;font-size:11px;">
+              ✓ Scans new commits<br>
+              ✓ Alerts on patterns (AWS, Azure, GitHub tokens)<br>
+              ✓ Can block push
+            </div>
+          </div>
+          <div class="card">
+            <h3>Pre-commit Hooks</h3>
+            <p>Client-side prevention with detect-secrets</p>
+            <div style="background:var(--bg);padding:8px;border-radius:3px;margin-top:8px;font-size:11px;">
+              $ pre-commit install<br>
+              Scans commit before push
+            </div>
+          </div>
+          <div class="card">
+            <h3>Environment Variables</h3>
+            <p>Never hardcode secrets</p>
+            <div style="background:var(--bg);padding:8px;border-radius:3px;margin-top:8px;font-size:11px;">
+              const key = process.env.API_KEY<br>
+              NOT: const key = "secret"
+            </div>
+          </div>
+        </div>
+
+        <h3>Azure Key Vault Integration</h3>
+        <p>Store secrets outside git entirely. Pipeline injects at runtime.</p>
+        <div class="code-block">
+          variables:<br>&nbsp;&nbsp;- group: production-secrets  # From Key Vault<br><br>
+          script: |<br>
+          &nbsp;&nbsp;export API_KEY=$(ApiKey)  # Injected from secrets<br>
+          &nbsp;&nbsp;./build.sh
+        </div>
+      </div>
+
+      <!-- TAB 4: Monorepo vs Multi-repo -->
+      <div class="tab-panel">
+        <h2>Monorepo vs Multi-repo Architecture</h2>
+        <p>Repository structure shapes team dynamics, deployment speed, and code sharing.</p>
+
+        <h3>Side-by-Side Comparison</h3>
+        <div class="comparison">
+          <div>
+            <h4>Monorepo (Single Repo)</h4>
+            <p style="font-size:11px;color:var(--muted);">One repo for entire organization</p>
+            <p class="pros">✓ Easier refactoring across services</p>
+            <p class="pros">✓ Shared code & libraries in same repo</p>
+            <p class="pros">✓ Atomic commits across services</p>
+            <p class="pros">✓ Single CI/CD setup</p>
+            <p class="cons">❌ Very large repo (scale issues)</p>
+            <p class="cons">❌ Harder permission boundaries</p>
+            <p class="cons">❌ All services use same deploy cadence</p>
+            <p><strong>Users:</strong> Google, Microsoft, Meta</p>
+          </div>
+          <div>
+            <h4>Multi-repo (Multiple Repos)</h4>
+            <p style="font-size:11px;color:var(--muted);">Separate repo per service/team</p>
+            <p class="pros">✓ Small, focused repos</p>
+            <p class="pros">✓ Clear permission boundaries</p>
+            <p class="pros">✓ Independent deploy cadence</p>
+            <p class="pros">✓ Easier to open-source</p>
+            <p class="cons">❌ Cross-repo refactoring painful</p>
+            <p class="cons">❌ Code duplication</p>
+            <p class="cons">❌ Dependency versioning challenges</p>
+            <p><strong>Users:</strong> Most startups & enterprises</p>
+          </div>
+        </div>
+
+        <h3>Decision Matrix: When to Use Each</h3>
+        <table style="margin:15px 0;">
+          <tr><th>Factor</th><th>Prefer Monorepo</th><th>Prefer Multi-repo</th></tr>
+          <tr><td>Team size</td><td>50+ engineers</td><td>&lt;20 engineers</td></tr>
+          <tr><td>Code sharing</td><td>Heavy (shared libs)</td><td>Light (via packages)</td></tr>
+          <tr><td>Services coupling</td><td>Tightly coupled</td><td>Loosely coupled</td></tr>
+          <tr><td>Deploy frequency</td><td>All together</td><td>Independent</td></tr>
+          <tr><td>Permissions</td><td>Coarse (org-wide)</td><td>Fine-grained (per team)</td></tr>
+          <tr><td>CI/CD complexity</td><td>Higher</td><td>Lower</td></tr>
+        </table>
+
+        <h3>Azure DevOps Monorepo: Path-Based Triggers</h3>
+        <p>Trigger pipelines only when specific service changes:</p>
+        <div class="code-block">
+          trigger:<br>
+          &nbsp;&nbsp;branches:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;include: [main]<br>
+          &nbsp;&nbsp;paths:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;include: [/services/api-gateway/*]<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;exclude: [/services/api-gateway/docs/*]<br>
+          <br>
+          <span class="highlight"># Only changes in /services/api-gateway/ trigger this pipeline</span><br>
+          <span class="highlight"># Changes in /services/worker/ are ignored</span>
+        </div>
+
+        <h3>Monorepo Tooling: Nx, Turborepo</h3>
+        <div class="grid">
+          <div class="card">
+            <h3>Nx (JavaScript/TypeScript)</h3>
+            <p>Task orchestration across monorepo</p>
+            <ul style="margin:8px 0 0 20px;">
+              <li>nx run-many --target=test (run tests on changed)</li>
+              <li>nx affected --target=build</li>
+              <li>Dependency graph visualization</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Turborepo (JavaScript/TypeScript)</h3>
+            <p>Fast monorepo build system</p>
+            <ul style="margin:8px 0 0 20px;">
+              <li>Caching across CI systems</li>
+              <li>Parallel task execution</li>
+              <li>Remote caching for teams</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Hybrid Approach: Monorepo Per Domain</h3>
+        <p>Best of both worlds:</p>
+        <div style="background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;margin:15px 0;font-size:12px;">
+          organization/<br>
+          &nbsp;&nbsp;payments-mono/ (1 repo: billing-service, invoice-service)<br>
+          &nbsp;&nbsp;analytics-mono/ (1 repo: events-collector, dashboard)<br>
+          &nbsp;&nbsp;infra-mono/ (1 repo: terraform, k8s configs)<br>
+          <br>
+          <span class="highlight"># Teams own their domain, can refactor freely within it</span><br>
+          <span class="highlight"># Each monorepo has independent CI/CD & permissions</span>
+        </div>
+      </div>
+
+      <!-- TAB 5: Dependency Management -->
+      <div class="tab-panel">
+        <h2>Dependency Management & Policies</h2>
+        <p>Managing third-party libraries, security vulnerabilities, and version compatibility at scale.</p>
+
+        <h3>Dependency Vulnerability Scanning</h3>
+        <div class="terminal">
+          <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — npm audit</span></div>
+          <div class="tbody">
+            <div class="tc">$ npm audit</div>
+            <div class="to">=== npm audit security report ===</div>
+            <div class="to">found 7 vulnerabilities (4 moderate, 3 high) in 1,234 packages</div>
+            <div class="terr">✗ express@4.18.0: DoS vulnerability in middleware</div>
+            <div class="terr">✗ lodash@4.17.20: Prototype pollution</div>
+            <div class="tc">$ npm audit fix</div>
+            <div class="to">Up to date, audited 1,241 packages</div>
+            <div class="tok">✓ 6 vulnerabilities fixed, 1 requires manual intervention</div>
+          </div>
+        </div>
+
+        <h3>Version Strategies: Caret (^) vs Exact (=)</h3>
+        <table style="margin:15px 0;">
+          <tr><th>Strategy</th><th>Example</th><th>Allows Updates</th><th>Use Case</th></tr>
+          <tr><td>Caret (^)</td><td>^1.2.3</td><td>1.2.3 to &lt;2.0.0 (minor + patch)</td><td>Most dependencies (default)</td></tr>
+          <tr><td>Tilde (~)</td><td>~1.2.3</td><td>1.2.3 to &lt;1.3.0 (patch only)</td><td>Stable libraries</td></tr>
+          <tr><td>Exact (=)</td><td>=1.2.3</td><td>Only 1.2.3 (no updates)</td><td>Critical/risky deps</td></tr>
+          <tr><td>Latest (*)</td><td>*</td><td>Any version (dangerous!)</td><td>Never use in production</td></tr>
+        </table>
+
+        <h3>Dependency Lock Files</h3>
+        <div class="comparison">
+          <div>
+            <h4>package.json</h4>
+            <div style="background:var(--bg);padding:8px;border-radius:3px;margin-top:8px;font-size:11px;">
+              "express": "^4.18.0"<br>
+              "lodash": "^4.17.0"<br>
+              <br>
+              <span class="highlight"># Declares intent, not exact versions</span>
+            </div>
+          </div>
+          <div>
+            <h4>package-lock.json</h4>
+            <div style="background:var(--bg);padding:8px;border-radius:3px;margin-top:8px;font-size:11px;">
+              "express": "4.18.2"<br>
+              "lodash": "4.17.21"<br>
+              <br>
+              <span class="highlight"># Locked to exact versions</span><br>
+              <span class="highlight"># npm ci uses lock file</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout info">
+          <span class="ci">ℹ️</span>
+          <span><strong>Best Practice:</strong> Commit lock files to git! Ensures reproducible builds across CI/local/production.</span>
+        </div>
+
+        <h3>Automated Dependency Updates: Dependabot</h3>
+        <p>GitHub automatically creates PRs for outdated dependencies.</p>
+        <div class="file-view">
+          <div class="file-name">.github/dependabot.yml</div>
+          <div>version: 2<br>
+          updates:<br>
+          &nbsp;&nbsp;- package-ecosystem: "npm"<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;directory: "/"<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;schedule:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interval: "weekly"<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;allow:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- dependency-type: "production"<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;pull-request-branch-name:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;separator: "/"</div>
+        </div>
+
+        <h3>Azure Artifacts: Private Package Feed</h3>
+        <p>Host private npm, NuGet, Maven packages for your organization.</p>
+        <div class="grid">
+          <div class="card">
+            <h3>Benefits</h3>
+            <ul>
+              <li>Private libraries shared across teams</li>
+              <li>Proxy public registries (npm, NuGet)</li>
+              <li>Upstream sources with failover</li>
+              <li>Audit/compliance tracking</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Setup</h3>
+            <div style="background:var(--bg);padding:8px;border-radius:3px;margin-top:8px;font-size:11px;">
+              npm config set<br>
+              registry=https://pkgs.dev.azure.com/...<br>
+              <br>
+              npm publish
+            </div>
+          </div>
+        </div>
+
+        <h3>License Compliance Scanning</h3>
+        <p>Some licenses incompatible with your product:</p>
+        <div class="terminal">
+          <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — license check</span></div>
+          <div class="tbody">
+            <div class="tc">$ npm list --depth=0</div>
+            <div class="to">express@4.18.2 (MIT) ✓</div>
+            <div class="to">lodash@4.17.21 (MIT) ✓</div>
+            <div class="to">commercial-lib@1.0.0 (Commercial) ⚠️</div>
+            <div class="twarn">⚠️ Commercial license requires corporate agreement</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 6: Exam Tips -->
+      <div class="tab-panel">
+        <h2>AZ-400 Exam Tips: Repository Management 🎯</h2>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Permissions Mastery</h3>
+            <p><strong>Know the roles:</strong> GitHub (Read, Triage, Write, Maintain, Admin) and Azure DevOps (Reader, Contributor, Build Admin, Project Admin)</p>
+            <p><strong>Exam Q:</strong> "What role allows pushing but not merging?" Answer: Write (GitHub) or Contributor (ADO)</p>
+            <p><strong>Protected branches:</strong> Always require 2 reviewers + CODEOWNERS + status checks</p>
+          </div>
+
+          <div class="card">
+            <h3>LFS vs Regular Git</h3>
+            <p><strong>When to use LFS:</strong> Binary files (PSD, ZIP, JAR, ISO)</p>
+            <p><strong>When NOT:</strong> Source code, JSON, YAML (git is optimized for these)</p>
+            <p><strong>Exam Q:</strong> "Repo is 2.3 GB with one PSD file. How to reduce?" Answer: Use LFS</p>
+            <p><strong>Remember:</strong> LFS requires <code>git lfs install</code> first!</p>
+          </div>
+
+          <div class="card">
+            <h3>Secret Purging Methods</h3>
+            <p><strong>Tools:</strong> filter-repo (modern), BFG (faster), git filter-branch (legacy)</p>
+            <p><strong>Critical First Step:</strong> ROTATE the secret on the service immediately!</p>
+            <p><strong>After purging:</strong> All team members must re-clone (force push breaks history)</p>
+            <p><strong>Prevention:</strong> .gitignore, GitHub secret scanning, pre-commit hooks</p>
+          </div>
+
+          <div class="card">
+            <h3>Monorepo Tricks</h3>
+            <p><strong>Path-based triggers:</strong> Azure Pipelines can trigger on file changes in /services/api/ only</p>
+            <p><strong>Decision factor:</strong> Team size + code sharing = monorepo; loosely coupled = multi-repo</p>
+            <p><strong>Exam Q:</strong> "Team of 8 microservices, independent deploy?" Multi-repo is simpler</p>
+            <p><strong>Tooling:</strong> Nx, Turborepo for monorepo optimization</p>
+          </div>
+
+          <div class="card">
+            <h3>Dependency Management</h3>
+            <p><strong>Vulnerability scanning:</strong> npm audit, pip audit, dotnet list package</p>
+            <p><strong>Lock files MUST be committed:</strong> npm ci uses lock file for reproducibility</p>
+            <p><strong>Dependabot:</strong> Auto-creates PRs for updates (configure schedule)</p>
+            <p><strong>Exam Q:</strong> "Ensure same versions in CI and local?" Answer: Commit lock file</p>
+          </div>
+
+          <div class="card">
+            <h3>Common Traps</h3>
+            <p class="cons">❌ "Deleting a file removes it from git history" — FALSE! Must use filter-repo</p>
+            <p class="cons">❌ "LFS works without git lfs install" — FALSE! Hook is essential</p>
+            <p class="cons">❌ "Admin can bypass branch protection" — PARTIALLY TRUE (force push)</p>
+            <p class="cons">❌ "CODEOWNERS is optional" — FALSE! Can be required by branch rules</p>
+          </div>
+        </div>
+
+        <h3>Final Checklist Before Exam</h3>
+        <div style="background:var(--surface2);border:1px solid var(--border);padding:15px;border-radius:4px;margin:15px 0;font-size:12px;">
+          ✓ Can you explain GitHub role permissions?<br>
+          ✓ Know when to use LFS and how to set it up?<br>
+          ✓ Understand secret purging methods and prevention?<br>
+          ✓ Can you decide monorepo vs multi-repo?<br>
+          ✓ Know dependency scanning tools?<br>
+          ✓ Understand path-based pipeline triggers?<br>
+          ✓ Can you explain CODEOWNERS and protected branches?
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab-panel');
+    const buttons = document.querySelectorAll('.tab-button');
+
+    function switchTab(index) {
+      tabs.forEach(t => t.classList.remove('active'));
+      buttons.forEach(b => b.classList.remove('active'));
+      tabs[index].classList.add('active');
+      buttons[index].classList.add('active');
+    }
+
+    function highlightRole(role) {
+      const details = document.getElementById('role-details');
+      const roleInfo = {
+        'read': {
+          title: 'Read',
+          desc: 'Pull-only access',
+          can: ['View repo', 'Clone code', 'Create issues', 'Create PRs'],
+          cannot: ['Push to branches', 'Merge PRs', 'Manage settings', 'Delete branches']
+        },
+        'triage': {
+          title: 'Triage',
+          desc: 'Read + manage issues/PRs without code changes',
+          can: ['Everything in Read', 'Close/reopen issues', 'Dismiss PR reviews', 'Link issues'],
+          cannot: ['Push code', 'Merge PRs', 'Manage settings']
+        },
+        'write': {
+          title: 'Write',
+          desc: 'Push and manage code',
+          can: ['Everything in Triage', 'Push to branches', 'Merge PRs (if no branch protection)', 'Create releases'],
+          cannot: ['Manage protected branches', 'Manage team access', 'Delete repo']
+        },
+        'maintain': {
+          title: 'Maintain',
+          desc: 'Manage repo without access to sensitive settings',
+          can: ['Everything in Write', 'Manage branch protection', 'Manage labels/milestones', 'Merge auto-merges'],
+          cannot: ['Change repo settings', 'Delete repo', 'Manage security settings']
+        },
+        'admin': {
+          title: 'Admin',
+          desc: 'Full repository control',
+          can: ['Everything in Maintain', 'Change repo settings', 'Force push protected branches', 'Delete repo', 'Manage team access'],
+          cannot: []
+        }
+      };
+
+      const info = roleInfo[role];
+      details.innerHTML = `
+        <h4>${info.title}</h4>
+        <p style="color:var(--muted);margin-bottom:10px;">${info.desc}</p>
+        <p style="color:var(--green);margin-bottom:5px;"><strong>CAN:</strong></p>
+        <ul style="margin:0 0 10px 20px;font-size:12px;">
+          ${info.can.map(c => `<li>${c}</li>`).join('')}
+        </ul>
+        <p style="color:var(--red);margin-bottom:5px;"><strong>CANNOT:</strong></p>
+        <ul style="margin:0 0 0 20px;font-size:12px;">
+          ${info.cannot.length > 0 ? info.cannot.map(c => `<li>${c}</li>`).join('') : '<li>Everything is allowed</li>'}
+        </ul>
+      `;
+    }
+
+    // Initialize first role
+    highlightRole('read');
+  </script>
+</body>
+</html>

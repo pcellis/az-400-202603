@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 5 — Git Hooks & Enforcement</title>
+  <style>
+    :root{
+      --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+      --text:#e6edf3;--muted:#8b949e;
+      --green:#3fb950;--blue:#58a6ff;--red:#f85149;--yellow:#d29922;
+      --orange:#e3b341;--purple:#bc8cff;--pink:#f778ba;--teal:#39d353;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'Cascadia Code','Fira Code',monospace,system-ui;line-height:1.6;}
+    nav{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--border);padding:1rem;display:flex;justify-content:space-between;align-items:center;z-index:100;}
+    .nav-logo{font-size:1.2rem;font-weight:bold;display:flex;align-items:center;gap:0.5rem;}
+    .wf-tabs{display:flex;gap:1rem;}
+    .wf-tab{background:transparent;border:none;color:var(--muted);padding:0.5rem 1rem;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.3s;}
+    .wf-tab:hover{color:var(--text);}
+    .wf-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+    .container{max-width:1200px;margin:0 auto;padding:2rem;}
+    .tab-content{display:none;}
+    .tab-content.active{display:block;}
+    .terminal{background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin:1rem 0;overflow:hidden;}
+    .tbar{background:var(--surface);padding:0.75rem;display:flex;align-items:center;gap:0.75rem;border-bottom:1px solid var(--border);}
+    .td{width:12px;height:12px;border-radius:50%;}
+    .tlabel{color:var(--muted);font-size:0.85rem;flex:1;text-align:right;}
+    .tbody{padding:1rem;font-size:0.95rem;}
+    .tc{color:var(--green);margin:0.5rem 0;}
+    .tc::before{content:"$ ";font-weight:bold;}
+    .to{color:var(--muted);margin:0.25rem 0 0.5rem 1rem;}
+    .tok{color:var(--green);margin:0.25rem 0 0.5rem 1rem;}
+    .twarn{color:var(--yellow);margin:0.25rem 0 0.5rem 1rem;}
+    .terr{color:var(--red);margin:0.25rem 0 0.5rem 1rem;}
+    .callout{display:flex;gap:1rem;padding:1rem;border-radius:8px;border-left:4px solid;margin:1rem 0;}
+    .callout.info{background:rgba(88,166,255,0.1);border-color:var(--blue);}
+    .callout.warn{background:rgba(210,153,34,0.1);border-color:var(--yellow);}
+    .callout.success{background:rgba(63,185,80,0.1);border-color:var(--green);}
+    .callout.danger{background:rgba(248,81,73,0.1);border-color:var(--red);}
+    .callout.tip{background:rgba(188,140,255,0.1);border-color:var(--purple);}
+    .ci{font-size:1.25rem;min-width:1.5rem;}
+    .panel{background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin:1rem 0;overflow:hidden;}
+    .panel-header{background:var(--surface);padding:0.75rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;font-weight:bold;}
+    .ph-dot{width:10px;height:10px;border-radius:50%;}
+    .panel-body{padding:1.5rem;}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1rem 0;}
+    .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin:1rem 0;}
+    .code{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1rem;overflow-x:auto;margin:1rem 0;font-size:0.9rem;}
+    .code-kw{color:var(--purple);}
+    .code-str{color:var(--teal);}
+    .code-comment{color:var(--muted);}
+    .code-func{color:var(--blue);}
+    .code-err{color:var(--red);}
+    h1{margin:1.5rem 0 1rem;font-size:2rem;}
+    h2{margin:1.5rem 0 0.75rem;font-size:1.5rem;color:var(--blue);}
+    h3{margin:1rem 0 0.5rem;font-size:1.2rem;color:var(--text);}
+    p{margin:0.75rem 0;}
+    .btn{background:var(--blue);color:var(--bg);border:none;padding:0.75rem 1.5rem;border-radius:6px;cursor:pointer;font-weight:bold;transition:all 0.3s;font-family:inherit;font-size:1rem;}
+    .btn:hover{background:var(--blue);filter:brightness(1.2);}
+    .btn-group{display:flex;gap:1rem;margin:1.5rem 0;}
+    .hook-item{background:var(--surface);border-left:3px solid var(--blue);padding:1rem;margin:0.75rem 0;border-radius:4px;cursor:pointer;transition:all 0.3s;}
+    .hook-item:hover{background:var(--surface2);border-left-color:var(--green);}
+    .hook-item.active{background:var(--surface2);border-left-color:var(--green);}
+    .hook-details{background:var(--surface2);padding:1rem;border-radius:4px;margin-top:1rem;display:none;}
+    .hook-details.active{display:block;}
+    .lifecycle-diagram{background:var(--surface);border:1px solid var(--border);padding:2rem;border-radius:8px;margin:1.5rem 0;text-align:center;}
+    .lifecycle-step{display:inline-block;background:var(--surface2);border:2px solid var(--border);padding:1rem 1.5rem;margin:0.5rem;border-radius:6px;min-width:150px;}
+    .lifecycle-arrow{display:inline-block;margin:0 0.5rem;color:var(--blue);}
+    .table{width:100%;border-collapse:collapse;margin:1rem 0;}
+    .table th{background:var(--surface);color:var(--text);padding:0.75rem;text-align:left;border-bottom:2px solid var(--border);}
+    .table td{padding:0.75rem;border-bottom:1px solid var(--border);}
+    .table tr:hover{background:var(--surface2);}
+    .msg-validator{margin:1.5rem 0;}
+    .msg-input{width:100%;padding:0.75rem;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:4px;font-family:inherit;font-size:0.95rem;margin-bottom:0.75rem;}
+    .msg-result{padding:1rem;border-radius:4px;margin-top:0.75rem;display:none;}
+    .msg-result.pass{background:rgba(63,185,80,0.15);border:1px solid var(--green);color:var(--green);}
+    .msg-result.fail{background:rgba(248,81,73,0.15);border:1px solid var(--red);color:var(--red);}
+    .comparison-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1rem 0;}
+    .comparison-cell{background:var(--surface);padding:1rem;border-radius:6px;border-left:3px solid var(--border);}
+    .comparison-cell.good{border-left-color:var(--green);}
+    .comparison-cell.bad{border-left-color:var(--red);}
+    .comparison-cell.neutral{border-left-color:var(--blue);}
+    .spec-item{background:var(--surface2);padding:0.75rem;margin:0.5rem 0;border-radius:4px;border-left:3px solid var(--blue);}
+    .icon{display:inline-block;margin-right:0.5rem;}
+    ul{margin-left:1.5rem;}
+    li{margin:0.5rem 0;}
+    @media(max-width:768px){
+      .two-col{grid-template-columns:1fr;}
+      .three-col{grid-template-columns:1fr;}
+      .comparison-row{grid-template-columns:1fr;}
+      nav{flex-direction:column;gap:1rem;}
+      .wf-tabs{flex-wrap:wrap;justify-content:center;}
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo">🔷 <span>Module 5: Git Hooks & Enforcement</span></div>
+    <div class="wf-tabs">
+      <button class="wf-tab active" onclick="showTab('tab1')">What Are Git Hooks?</button>
+      <button class="wf-tab" onclick="showTab('tab2')">Hook Execution Demo</button>
+      <button class="wf-tab" onclick="showTab('tab3')">Writing Hooks</button>
+      <button class="wf-tab" onclick="showTab('tab4')">Server-Side Hooks</button>
+      <button class="wf-tab" onclick="showTab('tab5')">Conventional Commits</button>
+      <button class="wf-tab" onclick="showTab('tab6')">Exam Tips</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- TAB 1: What Are Git Hooks? -->
+    <div id="tab1" class="tab-content active">
+      <h1>What Are Git Hooks?</h1>
+      <p>Git hooks are scripts that Git executes automatically at specific points in the development workflow. Think of them as <strong>airport security checkpoints</strong> — you can't proceed without passing through them.</p>
+
+      <div class="lifecycle-diagram">
+        <div><strong>Git Lifecycle with Hook Trigger Points</strong></div>
+        <div style="margin-top:1.5rem;">
+          <div class="lifecycle-step" style="border-left:4px solid var(--blue);">Developer<br>Types Commands</div>
+          <div class="lifecycle-arrow">→</div>
+          <div class="lifecycle-step" style="border-left:4px solid var(--purple);">pre-commit<br>Hook</div>
+          <div class="lifecycle-arrow">→</div>
+          <div class="lifecycle-step" style="border-left:4px solid var(--purple);">commit-msg<br>Hook</div>
+          <div class="lifecycle-arrow">→</div>
+          <div class="lifecycle-step" style="border-left:4px solid var(--green);">Commit Created</div>
+        </div>
+        <div style="margin-top:1.5rem;">
+          <div class="lifecycle-step" style="border-left:4px solid var(--green);">Commit Ready</div>
+          <div class="lifecycle-arrow">→</div>
+          <div class="lifecycle-step" style="border-left:4px solid var(--orange);">pre-push<br>Hook</div>
+          <div class="lifecycle-arrow">→</div>
+          <div class="lifecycle-step" style="border-left:4px solid var(--blue);">Push to Server</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <h3>Client-Side Hooks</h3>
+          <p>Run on developer's local machine. Can be bypassed with <code>--no-verify</code>.</p>
+          <div class="hook-item" onclick="selectHook('pre-commit')">
+            <strong>pre-commit</strong><br>
+            <span style="font-size:0.85rem;color:var(--muted);">Runs before commit is finalized</span>
+          </div>
+          <div class="hook-item" onclick="selectHook('prepare-commit-msg')">
+            <strong>prepare-commit-msg</strong><br>
+            <span style="font-size:0.85rem;color:var(--muted);">Modifies the commit message</span>
+          </div>
+          <div class="hook-item" onclick="selectHook('commit-msg')">
+            <strong>commit-msg</strong><br>
+            <span style="font-size:0.85rem;color:var(--muted);">Validates commit message format</span>
+          </div>
+          <div class="hook-item" onclick="selectHook('post-commit')">
+            <strong>post-commit</strong><br>
+            <span style="font-size:0.85rem;color:var(--muted);">Runs after commit succeeds</span>
+          </div>
+          <div class="hook-item" onclick="selectHook('pre-push')">
+            <strong>pre-push</strong><br>
+            <span style="font-size:0.85rem;color:var(--muted);">Validates before push</span>
+          </div>
+        </div>
+        <div>
+          <h3>Server-Side Hooks</h3>
+          <p>Run on the Git server. Cannot be bypassed — enforced for all developers.</p>
+          <div class="hook-item" onclick="selectHook('pre-receive')">
+            <strong>pre-receive</strong><br>
+            <span style="font-size:0.85rem;color:var(--muted);">Validates incoming push</span>
+          </div>
+          <div class="hook-item" onclick="selectHook('update')">
+            <strong>update</strong><br>
+            <span style="font-size:0.85rem;color:var(--muted);">Per-branch validation</span>
+          </div>
+          <div class="hook-item" onclick="selectHook('post-receive')">
+            <strong>post-receive</strong><br>
+            <span style="font-size:0.85rem;color:var(--muted);">Triggers after push accepted</span>
+          </div>
+          <div class="callout info" style="margin-top:1rem;">
+            <span class="ci">ℹ️</span>
+            <span><strong>Key Difference:</strong> Server hooks are mandatory for all developers. Client hooks can be skipped with <code>git commit --no-verify</code>.</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="hook-details" class="hook-details"></div>
+
+      <div class="callout success">
+        <span class="ci">✅</span>
+        <span><strong>Airport Analogy:</strong> Just like you can't board a plane without passing security, you can't commit code without passing git hooks. Some checkpoints (TSA/pre-commit) are on your local machine and can theoretically be bypassed. Others (airport security desk/server hooks) are mandatory and enforced for everyone.</span>
+      </div>
+    </div>
+
+    <!-- TAB 2: Hook Execution Demo -->
+    <div id="tab2" class="tab-content">
+      <h1>Hook Execution Demo</h1>
+      <p>Watch a step-by-step simulation of git hooks firing during commit and push workflows.</p>
+
+      <div class="btn-group">
+        <button class="btn" onclick="runSuccessScenario()">▶ Run Success Scenario</button>
+        <button class="btn" onclick="runFailureScenario()">▶ Run Failure Scenario</button>
+        <button class="btn" onclick="clearDemo()" style="background:var(--muted);">⟲ Reset</button>
+      </div>
+
+      <div id="demo-terminal" class="terminal" style="display:none;">
+        <div class="tbar">
+          <div class="td" style="background:#f85149"></div>
+          <div class="td" style="background:#e3b341"></div>
+          <div class="td" style="background:#3fb950"></div>
+          <span class="tlabel">bash — ~/project</span>
+        </div>
+        <div id="demo-tbody" class="tbody"></div>
+      </div>
+
+      <div id="scenario-description" style="margin-top:2rem;"></div>
+    </div>
+
+    <!-- TAB 3: Writing Hooks -->
+    <div id="tab3" class="tab-content">
+      <h1>Writing Git Hooks</h1>
+
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Pre-commit Hook (ESLint)</div>
+        <div class="panel-body">
+          <p>Run linting and code formatting checks before allowing a commit.</p>
+          <div class="code">
+<span class="code-comment">#!/bin/bash</span><br>
+<span class="code-comment"># .git/hooks/pre-commit</span><br>
+<span class="code-comment"># Prevent commits with linting errors</span><br>
+<br>
+<span class="code-kw">FILES</span>=<span class="code-str">$(git diff --cached --name-only --diff-filter=ACM)</span><br>
+<br>
+<span class="code-kw">if</span> [[ $<span class="code-kw">FILES</span> != <span class="code-str">""</span> ]]; <span class="code-kw">then</span><br>
+&nbsp;&nbsp;npx eslint $<span class="code-kw">FILES</span><br>
+&nbsp;&nbsp;<span class="code-kw">if</span> [[ $? != 0 ]]; <span class="code-kw">then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-err">exit 1</span><br>
+&nbsp;&nbsp;<span class="code-kw">fi</span><br>
+<span class="code-kw">fi</span>
+          </div>
+          <p><strong>Install:</strong></p>
+          <div class="code">
+<span class="code-func">cp</span> hooks/pre-commit .git/hooks/pre-commit<br>
+<span class="code-func">chmod</span> +x .git/hooks/pre-commit
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Commit-msg Hook (Conventional Commits)</div>
+        <div class="panel-body">
+          <p>Validate that commit messages follow the Conventional Commits format.</p>
+          <div class="code">
+<span class="code-comment">#!/bin/bash</span><br>
+<span class="code-comment"># .git/hooks/commit-msg</span><br>
+<span class="code-kw">MSG</span>=$(<span class="code-func">cat</span> $1)<br>
+<br>
+<span class="code-comment"># Check if message matches: type(scope): description</span><br>
+<span class="code-kw">if</span> ! [[ $<span class="code-kw">MSG</span> =~ ^(feat|fix|docs|style|refactor|test|chore)\: ]]; <span class="code-kw">then</span><br>
+&nbsp;&nbsp;<span class="code-err">echo "❌ Message must start with: feat|fix|docs|..."</span><br>
+&nbsp;&nbsp;<span class="code-err">exit 1</span><br>
+<span class="code-kw">fi</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Pre-push Hook (Run Tests)</div>
+        <div class="panel-body">
+          <p>Prevent pushing code that fails unit tests.</p>
+          <div class="code">
+<span class="code-comment">#!/bin/bash</span><br>
+<span class="code-kw">echo</span> <span class="code-str">"Running unit tests before push..."</span><br>
+npm test<br>
+<br>
+<span class="code-kw">if</span> [[ $? != 0 ]]; <span class="code-kw">then</span><br>
+&nbsp;&nbsp;<span class="code-err">echo "❌ Tests failed. Push cancelled."</span><br>
+&nbsp;&nbsp;<span class="code-err">exit 1</span><br>
+<span class="code-kw">fi</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Team-Wide Hook Sharing with Husky</h2>
+      <p>Problem: Hooks in <code>.git/hooks/</code> aren't shared in Git. Solution: Use <strong>Husky</strong> to share hooks across the team.</p>
+
+      <div class="code">
+<span class="code-comment">// package.json</span><br>
+{<br>
+&nbsp;&nbsp;<span class="code-str">"husky"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-str">"hooks"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-str">"pre-commit"</span>: <span class="code-str">"lint-staged"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-str">"commit-msg"</span>: <span class="code-str">"commitlint -E HUSKY_GIT_PARAMS"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-str">"pre-push"</span>: <span class="code-str">"npm test"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+}
+      </div>
+
+      <div class="callout success">
+        <span class="ci">✅</span>
+        <span><strong>Best Practice:</strong> Use Husky + lint-staged for client-side enforcement, and server-side hooks for mandatory enforcement.</span>
+      </div>
+    </div>
+
+    <!-- TAB 4: Server-Side Hooks & Branch Protection -->
+    <div id="tab4" class="tab-content">
+      <h1>Server-Side Hooks & Branch Protection</h1>
+
+      <h2>Client vs Server Hooks</h2>
+      <div class="comparison-row">
+        <div class="comparison-cell bad">
+          <strong>Client Hooks</strong><br>
+          Easy to bypass:<br>
+          <code style="color:var(--red);">--no-verify</code><br>
+          <br>
+          Run locally only<br>
+          Not enforced
+        </div>
+        <div class="comparison-cell neutral">
+          <strong>Server Hooks</strong><br>
+          Cannot bypass<br>
+          <br>
+          Run on Git server<br>
+          Mandatory for all
+        </div>
+        <div class="comparison-cell good">
+          <strong>Best Practice</strong><br>
+          Use both together<br>
+          <br>
+          Fast feedback locally<br>
+          Enforced on server
+        </div>
+      </div>
+
+      <h2>GitHub Branch Protection Rules</h2>
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#39d353"></div>Repository Settings → Branch Protection Rules</div>
+        <div class="panel-body">
+          <table class="table">
+            <tr>
+              <th>Rule</th>
+              <th>Purpose</th>
+              <th>Effect</th>
+            </tr>
+            <tr>
+              <td><strong>Require status checks</strong></td>
+              <td>PR must pass CI/CD tests</td>
+              <td>Blocks merge if tests fail</td>
+            </tr>
+            <tr>
+              <td><strong>Require code reviews</strong></td>
+              <td>At least N approvals needed</td>
+              <td>PR cannot merge without approvals</td>
+            </tr>
+            <tr>
+              <td><strong>Dismiss stale reviews</strong></td>
+              <td>Reviews reset when new commits added</td>
+              <td>Ensures reviewers see all changes</td>
+            </tr>
+            <tr>
+              <td><strong>Require signed commits</strong></td>
+              <td>All commits must be GPG signed</td>
+              <td>Verifies commit author identity</td>
+            </tr>
+            <tr>
+              <td><strong>Include administrators</strong></td>
+              <td>Rules apply to admins too</td>
+              <td>No one bypasses the rules</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <h2>Azure DevOps Branch Policies (Equivalent)</h2>
+      <div class="spec-item">Require a minimum number of reviewers</div>
+      <div class="spec-item">Check for linked work items</div>
+      <div class="spec-item">Require comment resolution</div>
+      <div class="spec-item">Enforce a merge strategy (squash, rebase, etc.)</div>
+      <div class="spec-item">Run automated builds (CI/CD)</div>
+      <div class="spec-item">Require successful builds</div>
+
+      <h2>Force Push Attack</h2>
+      <p>Without server-side protection, a developer could force-push and rewrite history:</p>
+
+      <div class="terminal">
+        <div class="tbar">
+          <div class="td" style="background:#f85149"></div>
+          <div class="td" style="background:#e3b341"></div>
+          <div class="td" style="background:#3fb950"></div>
+          <span class="tlabel">bash — ~/project</span>
+        </div>
+        <div class="tbody">
+          <div class="tc">git push --force origin main</div>
+          <div class="terr">remote: error: [pre-receive hook] rejected push</div>
+          <div class="terr">remote: Force pushes are not allowed on main branch</div>
+          <div class="to">fatal: the remote end hung up unexpectedly</div>
+        </div>
+      </div>
+
+      <div class="callout danger">
+        <span class="ci">🚫</span>
+        <span><strong>Critical:</strong> Enable "Allow force pushes: No" on protected branches to prevent history rewriting attacks.</span>
+      </div>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <span><strong>Exam Tip:</strong> Know the difference between <code>pre-receive</code> (validates all refs), <code>update</code> (per-branch validation), and <code>post-receive</code> (triggers after acceptance, e.g., deployments).</span>
+      </div>
+    </div>
+
+    <!-- TAB 5: Conventional Commits -->
+    <div id="tab5" class="tab-content">
+      <h1>Conventional Commits Format</h1>
+
+      <p><strong>Format:</strong> <code>type(scope): description [body] [footer]</code></p>
+
+      <h2>Commit Types</h2>
+      <table class="table">
+        <tr>
+          <th>Type</th>
+          <th>Meaning</th>
+          <th>Example</th>
+        </tr>
+        <tr>
+          <td><strong>feat</strong></td>
+          <td>New feature</td>
+          <td>feat(auth): add password reset flow</td>
+        </tr>
+        <tr>
+          <td><strong>fix</strong></td>
+          <td>Bug fix</td>
+          <td>fix(api): handle null response in validation</td>
+        </tr>
+        <tr>
+          <td><strong>docs</strong></td>
+          <td>Documentation update</td>
+          <td>docs: update setup instructions</td>
+        </tr>
+        <tr>
+          <td><strong>style</strong></td>
+          <td>Code formatting (no logic change)</td>
+          <td>style: remove trailing whitespace</td>
+        </tr>
+        <tr>
+          <td><strong>refactor</strong></td>
+          <td>Code restructuring (no feature change)</td>
+          <td>refactor: extract validation logic to utils</td>
+        </tr>
+        <tr>
+          <td><strong>test</strong></td>
+          <td>Test additions/modifications</td>
+          <td>test: add edge case for login validation</td>
+        </tr>
+        <tr>
+          <td><strong>chore</strong></td>
+          <td>Maintenance (deps, build, etc.)</td>
+          <td>chore: upgrade React to 18.2</td>
+        </tr>
+        <tr>
+          <td><strong>perf</strong></td>
+          <td>Performance improvement</td>
+          <td>perf: optimize database query</td>
+        </tr>
+        <tr>
+          <td><strong>ci</strong></td>
+          <td>CI/CD configuration</td>
+          <td>ci: add GitHub Actions workflow</td>
+        </tr>
+      </table>
+
+      <h2>Interactive Message Validator</h2>
+      <div class="msg-validator">
+        <label><strong>Test your commit message:</strong></label><br>
+        <input type="text" class="msg-input" id="msg-test" placeholder="e.g., feat(auth): add two-factor authentication" onkeyup="validateCommitMsg()">
+        <div id="msg-result"></div>
+      </div>
+
+      <h2>Good vs Bad Examples</h2>
+      <div class="comparison-row">
+        <div class="comparison-cell good">
+          <strong>✅ Good</strong><br><br>
+          feat(cart): add coupon code support<br><br>
+          fix(api): handle network timeout error<br><br>
+          docs(readme): add deployment guide<br><br>
+          refactor(utils): simplify validation logic
+        </div>
+        <div class="comparison-cell bad">
+          <strong>❌ Bad</strong><br><br>
+          fixed stuff<br><br>
+          wip<br><br>
+          updates<br><br>
+          asdfgh
+        </div>
+        <div class="comparison-cell neutral">
+          <strong>Why It Matters</strong><br><br>
+          Auto-generate CHANGELOG<br><br>
+          Semantic versioning<br><br>
+          Git history is searchable<br><br>
+          CI/CD can parse it
+        </div>
+      </div>
+
+      <h2>Automatic Versioning with Semantic Release</h2>
+      <div class="panel">
+        <div class="panel-header"><div class="ph-dot" style="background:#bc8cff"></div>Semantic Release Pipeline</div>
+        <div class="panel-body">
+          <p>Conventional Commits enable automatic versioning:</p>
+          <ul>
+            <li><strong>feat:</strong> increases minor version (1.2.0 → 1.3.0)</li>
+            <li><strong>fix:</strong> increases patch version (1.2.0 → 1.2.1)</li>
+            <li><strong>BREAKING CHANGE:</strong> increases major version (1.2.0 → 2.0.0)</li>
+          </ul>
+          <p style="margin-top:1rem;"><code>semantic-release</code> automatically:</p>
+          <ul>
+            <li>Analyzes commits since last release</li>
+            <li>Determines new version number</li>
+            <li>Generates CHANGELOG.md</li>
+            <li>Creates Git tag</li>
+            <li>Publishes to npm/registry</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout success">
+        <span class="ci">✅</span>
+        <span><strong>Exam Insight:</strong> Understand that Conventional Commits enable automation. A "feat" commit automatically triggers a minor version bump, a "fix" triggers a patch. This is how DevOps teams achieve continuous release.</span>
+      </div>
+    </div>
+
+    <!-- TAB 6: Exam Tips -->
+    <div id="tab6" class="tab-content">
+      <h1>Exam Tips for Git Hooks (AZ-400)</h1>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <span><strong>Tip 1:</strong> Pre-commit hooks run on the developer's machine. They CAN be bypassed with <code>git commit --no-verify</code>. Server hooks CANNOT be bypassed.</span>
+      </div>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <span><strong>Tip 2:</strong> When exam asks "How do you ensure all developers follow commit standards?", the answer is SERVER-SIDE HOOKS or BRANCH PROTECTION RULES. Client-side hooks are for convenience.</span>
+      </div>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <span><strong>Tip 3:</strong> Distinguish these three server hooks:</span>
+      </div>
+
+      <div class="three-col">
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>pre-receive</div>
+          <div class="panel-body">
+            <p><strong>Fires:</strong> Before any ref is updated</p>
+            <p><strong>Sees:</strong> All refs being pushed</p>
+            <p><strong>Use:</strong> Validate overall push</p>
+            <p style="margin-top:1rem;"><code>stdin: oldref newref refname</code></p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>update</div>
+          <div class="panel-body">
+            <p><strong>Fires:</strong> Once per branch</p>
+            <p><strong>Sees:</strong> Single branch at a time</p>
+            <p><strong>Use:</strong> Per-branch rules</p>
+            <p style="margin-top:1rem;"><code>args: refname oldrev newrev</code></p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="ph-dot" style="background:#f778ba"></div>post-receive</div>
+          <div class="panel-body">
+            <p><strong>Fires:</strong> After push is accepted</p>
+            <p><strong>Sees:</strong> All refs (read-only)</p>
+            <p><strong>Use:</strong> Deploy, trigger CI/CD</p>
+            <p style="margin-top:1rem;">Runs asynchronously</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <span class="ci">⚠️</span>
+        <span><strong>Trap:</strong> Exam might ask "Which hook should prevent a push?" Answer: <code>pre-receive</code> or <code>update</code>. NOT <code>post-receive</code> (it runs after push already succeeded).</span>
+      </div>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <span><strong>Exam Scenario:</strong> "You want to prevent commits with hardcoded secrets. Where do you put the check?" Answer: Both client (pre-commit hook with git-secrets) AND server (pre-receive hook). This is "defense in depth."</span>
+      </div>
+
+      <div class="callout success">
+        <span class="ci">✅</span>
+        <span><strong>Key Concept:</strong> Hooks + Branch Protection Rules + PR Reviews form the "three lines of defense" against bad code reaching main branch.</span>
+      </div>
+
+      <h2>Study Focus Areas</h2>
+      <ul>
+        <li>Know when each hook fires in the Git lifecycle</li>
+        <li>Understand client vs server hooks (esp. bypass capability)</li>
+        <li>Compare pre-receive vs update vs post-receive</li>
+        <li>Understand Conventional Commits format and automation benefits</li>
+        <li>Know GitHub branch protection rules vs Azure DevOps policies</li>
+        <li>Recognize hook scripts (bash/node syntax)</li>
+        <li>Understand Husky for team-wide hook sharing</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const hookDetails = {
+      'pre-commit': {
+        title: 'pre-commit Hook',
+        timing: 'Before commit is created',
+        purpose: 'Validate code quality, run linters, formatters, security checks',
+        canBypass: 'Yes, with --no-verify',
+        exit: 'Exit 0 = allow commit, Exit 1 = block commit',
+        example: 'eslint, prettier, git-secrets'
+      },
+      'prepare-commit-msg': {
+        title: 'prepare-commit-msg Hook',
+        timing: 'Before commit message editor opens',
+        purpose: 'Auto-populate or modify commit message',
+        canBypass: 'Yes, with --no-verify',
+        exit: 'Exit 0 = proceed, Exit 1 = abort',
+        example: 'Add ticket number from branch name: #123'
+      },
+      'commit-msg': {
+        title: 'commit-msg Hook',
+        timing: 'After message is written, before commit saved',
+        purpose: 'Validate commit message format',
+        canBypass: 'Yes, with --no-verify',
+        exit: 'Exit 0 = accept message, Exit 1 = reject',
+        example: 'Enforce Conventional Commits format'
+      },
+      'post-commit': {
+        title: 'post-commit Hook',
+        timing: 'After commit is successfully created',
+        purpose: 'Notification, logging, post-processing',
+        canBypass: 'No (runs after commit succeeds)',
+        exit: 'Exit code is ignored',
+        example: 'Send notification, update build system'
+      },
+      'pre-push': {
+        title: 'pre-push Hook',
+        timing: 'Before push to remote repository',
+        purpose: 'Final validation before code leaves local machine',
+        canBypass: 'Yes, with --no-verify',
+        exit: 'Exit 0 = allow push, Exit 1 = block push',
+        example: 'Run unit tests, security scans'
+      },
+      'pre-receive': {
+        title: 'pre-receive Hook (Server)',
+        timing: 'Server receives push, before refs updated',
+        purpose: 'Validate all incoming refs, final enforcement',
+        canBypass: 'No - runs on server, CANNOT bypass',
+        exit: 'Exit 0 = accept push, Exit 1 = reject entire push',
+        example: 'Verify commits are signed, check branch policies'
+      },
+      'update': {
+        title: 'update Hook (Server)',
+        timing: 'Once per ref being updated on server',
+        purpose: 'Per-branch/ref validation and policies',
+        canBypass: 'No - runs on server, CANNOT bypass',
+        exit: 'Exit 0 = accept ref, Exit 1 = reject this ref',
+        example: 'Prevent force push to main, require code review'
+      },
+      'post-receive': {
+        title: 'post-receive Hook (Server)',
+        timing: 'After all refs accepted and repository updated',
+        purpose: 'Trigger deployments, send notifications',
+        canBypass: 'N/A (runs after success)',
+        exit: 'Exit code typically ignored',
+        example: 'Trigger CI/CD pipeline, send Slack notification'
+      }
+    };
+
+    function selectHook(hookName) {
+      const details = hookDetails[hookName];
+      if (!details) return;
+
+      const html = `
+        <h3>${details.title}</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div>
+            <p><strong>Timing:</strong> ${details.timing}</p>
+            <p><strong>Purpose:</strong> ${details.purpose}</p>
+          </div>
+          <div>
+            <p><strong>Can Bypass:</strong> ${details.canBypass}</p>
+            <p><strong>Exit Code:</strong> ${details.exit}</p>
+          </div>
+        </div>
+        <p><strong>Common Examples:</strong> ${details.example}</p>
+      `;
+
+      document.getElementById('hook-details').innerHTML = html;
+      document.getElementById('hook-details').classList.add('active');
+    }
+
+    function showTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.wf-tab').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function validateCommitMsg() {
+      const input = document.getElementById('msg-test').value.trim();
+      const result = document.getElementById('msg-result');
+
+      if (!input) {
+        result.style.display = 'none';
+        return;
+      }
+
+      const regex = /^(feat|fix|docs|style|refactor|test|chore|perf|ci)(\(.+\))?: .{10,}$/;
+      const isValid = regex.test(input);
+
+      result.style.display = 'block';
+      result.className = isValid ? 'msg-result pass' : 'msg-result fail';
+      result.innerHTML = isValid ?
+        '<strong>✅ Valid!</strong> This message follows Conventional Commits.' :
+        '<strong>❌ Invalid.</strong> Format: type(scope): description (min 10 chars)';
+    }
+
+    async function typeTerminal(text) {
+      const tbody = document.getElementById('demo-tbody');
+      const line = document.createElement('div');
+      line.className = 'tc';
+      tbody.appendChild(line);
+
+      for (let char of text) {
+        line.textContent += char;
+        await new Promise(r => setTimeout(r, 30));
+      }
+    }
+
+    async function addOutput(text, className = 'to') {
+      const tbody = document.getElementById('demo-tbody');
+      const line = document.createElement('div');
+      line.className = className;
+      line.textContent = text;
+      tbody.appendChild(line);
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    function showTerminal() {
+      document.getElementById('demo-terminal').style.display = 'block';
+      document.getElementById('demo-tbody').innerHTML = '';
+    }
+
+    async function runSuccessScenario() {
+      showTerminal();
+
+      document.getElementById('scenario-description').innerHTML = `
+        <h2>Success Scenario: Valid Commit & Push</h2>
+        <p>Developer creates a properly formatted commit and all hooks pass.</p>
+      `;
+
+      await typeTerminal('git commit -m "feat(auth): add password reset flow"');
+      await addOutput('');
+      await addOutput('[pre-commit hook] Running ESLint...', 'to');
+      await addOutput('✓ No linting errors found', 'tok');
+      await addOutput('');
+      await addOutput('[commit-msg hook] Validating message format...', 'to');
+      await addOutput('✓ Message matches Conventional Commits', 'tok');
+      await addOutput('');
+      await addOutput('[master (root-commit) a1b2c3d] feat(auth): add password reset flow', 'to');
+      await addOutput('✓ Commit created successfully', 'tok');
+      await addOutput('');
+      await typeTerminal('git push origin main');
+      await addOutput('');
+      await addOutput('[pre-push hook] Running unit tests...', 'to');
+      await addOutput('✓ All 24 tests passed', 'tok');
+      await addOutput('');
+      await addOutput('Counting objects: 3, done.', 'to');
+      await addOutput('Writing objects: 100% (3/3), 298 bytes | 298.00 KiB/s', 'to');
+      await addOutput('[server] [pre-receive] Validating refs...', 'to');
+      await addOutput('✓ All commits are properly signed', 'tok');
+      await addOutput('');
+      await addOutput('To https://github.com/org/project.git', 'to');
+      await addOutput('   d1e2f3g..a1b2c3d  main -> main', 'to');
+      await addOutput('✅ Push completed successfully!', 'tok');
+    }
+
+    async function runFailureScenario() {
+      showTerminal();
+
+      document.getElementById('scenario-description').innerHTML = `
+        <h2>Failure Scenario: Invalid Commit Message</h2>
+        <p>Developer commits with an improperly formatted message. The commit-msg hook blocks the commit.</p>
+      `;
+
+      await typeTerminal('git commit -m "wip"');
+      await addOutput('');
+      await addOutput('[pre-commit hook] Running ESLint...', 'to');
+      await addOutput('✓ No linting errors found', 'tok');
+      await addOutput('');
+      await addOutput('[commit-msg hook] Validating message format...', 'to');
+      await addOutput('❌ ERROR: Commit message must follow Conventional Commits', 'terr');
+      await addOutput('Expected format: type(scope): description', 'terr');
+      await addOutput('Example: feat(auth): add password reset', 'terr');
+      await addOutput('');
+      await addOutput('commit-msg hook rejected your commit', 'terr');
+      await addOutput('');
+      await addOutput('Hint: fix your commit message and try again:', 'twarn');
+      await addOutput('  git commit --amend', 'twarn');
+    }
+
+    function clearDemo() {
+      document.getElementById('demo-terminal').style.display = 'none';
+      document.getElementById('demo-tbody').innerHTML = '';
+      document.getElementById('scenario-description').innerHTML = '';
+    }
+  </script>
+</body>
+</html>

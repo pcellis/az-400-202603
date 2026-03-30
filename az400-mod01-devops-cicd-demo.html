@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 1 — DevOps & CI/CD Pipeline | AZ-400</title>
+    <style>
+        :root{
+            --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+            --text:#e6edf3;--muted:#8b949e;
+            --green:#3fb950;--blue:#58a6ff;--red:#f85149;--yellow:#d29922;
+            --orange:#e3b341;--purple:#bc8cff;--pink:#f778ba;--teal:#39d353;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            background:var(--bg);color:var(--text);font-family:'Cascadia Code','Fira Code',monospace,system-ui;
+            line-height:1.6;font-size:14px
+        }
+        nav{
+            position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--border);
+            display:flex;justify-content:space-between;align-items:center;padding:12px 20px;z-index:100
+        }
+        .nav-logo{display:flex;align-items:center;gap:8px;font-weight:bold;font-size:16px}
+        .wf-tabs{display:flex;gap:4px}
+        .wf-tab{
+            background:transparent;border:1px solid var(--border);color:var(--muted);
+            padding:8px 16px;cursor:pointer;border-radius:6px;font-family:inherit;
+            transition:.2s;font-size:13px
+        }
+        .wf-tab:hover{color:var(--text);background:var(--surface2)}
+        .wf-tab.active{color:var(--blue);border-color:var(--blue);background:rgba(88,166,255,.1)}
+        .container{max-width:1200px;margin:0 auto;padding:20px}
+        .tab-content{display:none}
+        .tab-content.active{display:block}
+        .panel{
+            background:var(--surface);border:1px solid var(--border);border-radius:8px;
+            overflow:hidden;margin-bottom:16px
+        }
+        .panel-header{
+            background:var(--surface2);border-bottom:1px solid var(--border);
+            padding:12px 16px;display:flex;align-items:center;gap:8px;font-weight:bold
+        }
+        .ph-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+        .panel-body{padding:16px}
+        .terminal{
+            background:var(--surface);border:1px solid var(--border);border-radius:8px;
+            overflow:hidden;margin-bottom:16px;font-family:'Cascadia Code',monospace;font-size:13px
+        }
+        .tbar{
+            background:var(--surface2);border-bottom:1px solid var(--border);
+            padding:8px 12px;display:flex;align-items:center;gap:6px
+        }
+        .td{width:12px;height:12px;border-radius:50%;cursor:pointer}
+        .tlabel{margin-left:auto;font-size:12px;color:var(--muted)}
+        .tbody{padding:12px}
+        .tc{color:var(--green);margin-bottom:4px;white-space:pre-wrap}
+        .tc::before{content:"$ ";color:var(--green);font-weight:bold}
+        .to{color:var(--muted);margin-bottom:4px;white-space:pre-wrap}
+        .tok{color:var(--green);margin-bottom:4px}
+        .twarn{color:var(--yellow);margin-bottom:4px}
+        .terr{color:var(--red);margin-bottom:4px}
+        .callout{
+            background:var(--surface);border-left:4px solid var(--blue);
+            padding:12px 16px;margin-bottom:16px;border-radius:4px;display:flex;gap:12px;align-items:flex-start
+        }
+        .callout.warn{border-left-color:var(--yellow)}
+        .callout.success{border-left-color:var(--green)}
+        .callout.danger{border-left-color:var(--red)}
+        .callout.tip{border-left-color:var(--purple)}
+        .ci{font-size:18px;flex-shrink:0}
+        .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+        .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+        .comparison-table{width:100%;border-collapse:collapse;margin-bottom:16px}
+        .comparison-table th{
+            background:var(--surface2);color:var(--text);padding:12px;text-align:left;
+            border:1px solid var(--border);font-weight:bold
+        }
+        .comparison-table td{
+            padding:12px;border:1px solid var(--border);background:var(--surface)
+        }
+        .comparison-table tr:nth-child(even) td{background:var(--surface2)}
+        .badge{
+            display:inline-block;padding:4px 10px;border-radius:12px;font-size:12px;
+            font-weight:bold;margin-right:4px
+        }
+        .badge.success{background:rgba(63,185,80,.2);color:var(--green)}
+        .badge.warning{background:rgba(210,153,34,.2);color:var(--yellow)}
+        .badge.error{background:rgba(248,81,73,.2);color:var(--red)}
+        button{
+            background:rgba(63,185,80,.15);border:1px solid rgba(63,185,80,.3);color:var(--green);
+            padding:8px 20px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;
+            transition:.2s;font-weight:bold
+        }
+        button:hover{background:rgba(63,185,80,.25)}
+        button:active{transform:scale(.98)}
+        .step-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+        .step-pill{
+            background:rgba(88,166,255,.15);border:1px solid rgba(88,166,255,.3);
+            color:var(--blue);padding:6px 14px;border-radius:999px;font-size:12px;
+            cursor:pointer;transition:.2s
+        }
+        .step-pill.active{background:rgba(88,166,255,.3);color:var(--text)}
+        .step-pill:hover{background:rgba(88,166,255,.25)}
+        .pipeline-stage{
+            background:var(--surface2);border:1px solid var(--border);padding:16px;
+            border-radius:6px;text-align:center;margin-bottom:8px;cursor:pointer;
+            transition:.3s;position:relative;overflow:hidden
+        }
+        .pipeline-stage:hover{border-color:var(--blue);transform:translateY(-2px)}
+        .pipeline-stage.active{background:rgba(63,185,80,.2);border-color:var(--green)}
+        .pipeline-stage.failed{background:rgba(248,81,73,.2);border-color:var(--red)}
+        .loop-svg{width:100%;max-width:600px;margin:0 auto 24px;display:block}
+        .cost-chart{width:100%;max-width:500px;margin:16px auto}
+        .progress-bar{width:100%;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-top:8px}
+        .progress-fill{height:100%;background:var(--green);transition:width .3s}
+        .code-block{
+            background:var(--surface2);border:1px solid var(--border);padding:12px;
+            border-radius:6px;overflow-x:auto;margin-bottom:16px;color:var(--blue);
+            font-family:'Cascadia Code',monospace;font-size:12px
+        }
+        .hint-box{
+            background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);
+            padding:12px 16px;border-radius:6px;margin-bottom:16px;color:var(--blue);font-size:13px
+        }
+        .do-dont{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+        .do-box{border-left:4px solid var(--green);background:var(--surface);padding:12px 16px;border-radius:4px}
+        .dont-box{border-left:4px solid var(--red);background:var(--surface);padding:12px 16px;border-radius:4px}
+        .do-box::before{content:"✓ DO: ";color:var(--green);font-weight:bold;display:block;margin-bottom:4px}
+        .dont-box::before{content:"✗ DON'T: ";color:var(--red);font-weight:bold;display:block;margin-bottom:4px}
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-logo">🔷 <span>MODULE 1 — DevOps & CI/CD</span></div>
+        <div class="wf-tabs">
+            <button class="wf-tab active" onclick="showTab('what-is')">What is DevOps?</button>
+            <button class="wf-tab" onclick="showTab('pipeline')">CI/CD Pipeline</button>
+            <button class="wf-tab" onclick="showTab('comparison')">Azure vs GitHub</button>
+            <button class="wf-tab" onclick="showTab('shift-left')">Shift-Left Testing</button>
+            <button class="wf-tab" onclick="showTab('tips')">Exam Tips 🎯</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- TAB 1: What is DevOps? -->
+        <div id="what-is" class="tab-content active">
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#bc8cff"></div>DevOps Core Concept</div>
+                <div class="panel-body">
+                    <div class="callout tip">
+                        <span class="ci">💡</span>
+                        <span><strong>DevOps = Culture + Process + Tools</strong> — Breaking down silos between developers and operations teams to deliver software faster and more reliably.</span>
+                    </div>
+                    <p style="margin-bottom:16px">DevOps represents a fundamental shift from traditional waterfall development where Dev and Ops teams worked in complete isolation.</p>
+                    <svg class="loop-svg" viewBox="0 0 700 300">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#58a6ff" />
+                            </marker>
+                        </defs>
+                        <text x="10" y="30" fill="#8b949e" font-size="12">Before DevOps (Silos)</text>
+                        <rect x="20" y="50" width="120" height="80" fill="rgba(248,81,73,.15)" stroke="#f85149" stroke-width="2" rx="4"/>
+                        <text x="80" y="95" text-anchor="middle" fill="#f85149" font-weight="bold">Development</text>
+                        <text x="80" y="115" text-anchor="middle" fill="#f85149" font-size="12">Build & Ship</text>
+                        <path d="M 140 90 L 200 90" stroke="#8b949e" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <rect x="200" y="50" width="120" height="80" fill="rgba(248,81,73,.15)" stroke="#f85149" stroke-width="2" rx="4"/>
+                        <text x="260" y="95" text-anchor="middle" fill="#f85149" font-weight="bold">Operations</text>
+                        <text x="260" y="115" text-anchor="middle" fill="#f85149" font-size="12">Run & Support</text>
+                        <text x="10" y="180" fill="#8b949e" font-size="12">After DevOps (Unified)</text>
+                        <circle cx="180" cy="240" r="80" fill="none" stroke="#3fb950" stroke-width="3" stroke-dasharray="5,5"/>
+                        <text x="180" y="235" text-anchor="middle" fill="#3fb950" font-weight="bold" font-size="14">DevOps Team</text>
+                        <text x="180" y="255" text-anchor="middle" fill="#3fb950" font-size="12">Plan-Code-Build-Test</text>
+                        <text x="180" y="270" text-anchor="middle" fill="#3fb950" font-size="12">Release-Deploy-Operate</text>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>8 DevOps Practices (Infinity Loop)</div>
+                <div class="panel-body">
+                    <p style="margin-bottom:12px">Click each practice to learn more:</p>
+                    <div class="step-pills">
+                        <span class="step-pill active" onclick="showPractice('plan')">1. Plan</span>
+                        <span class="step-pill" onclick="showPractice('code')">2. Code</span>
+                        <span class="step-pill" onclick="showPractice('build')">3. Build</span>
+                        <span class="step-pill" onclick="showPractice('test')">4. Test</span>
+                        <span class="step-pill" onclick="showPractice('release')">5. Release</span>
+                        <span class="step-pill" onclick="showPractice('deploy')">6. Deploy</span>
+                        <span class="step-pill" onclick="showPractice('operate')">7. Operate</span>
+                        <span class="step-pill" onclick="showPractice('monitor')">8. Monitor</span>
+                    </div>
+                    <div id="practice-detail" style="margin-top:16px">
+                        <div class="panel" style="margin:0">
+                            <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>1. PLAN</div>
+                            <div class="panel-body">
+                                <p><strong>Define requirements and roadmap</strong></p>
+                                <p style="margin-top:8px;color:var(--muted)">Use Azure Boards for backlog management, sprint planning, and tracking work items. Tools: Azure Boards, GitHub Issues, Jira.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="two-col">
+                <div class="panel">
+                    <div class="panel-header"><div class="ph-dot" style="background:#f85149"></div>Traditional Waterfall</div>
+                    <div class="panel-body">
+                        <div style="color:var(--muted);font-size:12px">
+                            <div style="margin-bottom:8px">✗ Long release cycles (months/years)</div>
+                            <div style="margin-bottom:8px">✗ Late testing phase</div>
+                            <div style="margin-bottom:8px">✗ Dev vs Ops conflict</div>
+                            <div style="margin-bottom:8px">✗ High deployment risk</div>
+                            <div style="margin-bottom:8px">✗ Limited feedback loops</div>
+                            <div style="margin-bottom:8px">✗ Slow time-to-market</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>DevOps Approach</div>
+                    <div class="panel-body">
+                        <div style="color:var(--text);font-size:12px">
+                            <div style="margin-bottom:8px">✓ Continuous releases (daily/weekly)</div>
+                            <div style="margin-bottom:8px">✓ Testing from day one</div>
+                            <div style="margin-bottom:8px">✓ Shared responsibility</div>
+                            <div style="margin-bottom:8px">✓ Automated deployments</div>
+                            <div style="margin-bottom:8px">✓ Real-time feedback</div>
+                            <div style="margin-bottom:8px">✓ Faster time-to-market</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout success">
+                <span class="ci">✅</span>
+                <span><strong>Key Benefit:</strong> DevOps reduces time from idea to production from months to hours/days, enabling rapid iteration and faster feedback loops.</span>
+            </div>
+        </div>
+
+        <!-- TAB 2: CI/CD Pipeline -->
+        <div id="pipeline" class="tab-content">
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Pipeline Stages Overview</div>
+                <div class="panel-body">
+                    <p style="margin-bottom:16px">Click on any stage below to see what happens during that phase:</p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:24px">
+                        <div class="pipeline-stage" onclick="showPipelineStage('code')"><strong>Code</strong><div style="font-size:11px;color:var(--muted);margin-top:4px">Commit & Push</div></div>
+                        <div class="pipeline-stage" onclick="showPipelineStage('build')"><strong>Build</strong><div style="font-size:11px;color:var(--muted);margin-top:4px">Compile & Package</div></div>
+                        <div class="pipeline-stage" onclick="showPipelineStage('test')"><strong>Test</strong><div style="font-size:11px;color:var(--muted);margin-top:4px">Unit & Integration</div></div>
+                        <div class="pipeline-stage" onclick="showPipelineStage('security')"><strong>Security</strong><div style="font-size:11px;color:var(--muted);margin-top:4px">SAST & Scanning</div></div>
+                        <div class="pipeline-stage" onclick="showPipelineStage('staging')"><strong>Staging</strong><div style="font-size:11px;color:var(--muted);margin-top:4px">Pre-Production</div></div>
+                        <div class="pipeline-stage" onclick="showPipelineStage('prod')"><strong>Production</strong><div style="font-size:11px;color:var(--muted);margin-top:4px">Live Release</div></div>
+                    </div>
+
+                    <div id="stage-detail">
+                        <div class="panel" style="margin:0;margin-bottom:16px">
+                            <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Code Stage</div>
+                            <div class="panel-body">
+                                <p style="margin-bottom:8px"><strong>Developer commits code to repository</strong></p>
+                                <div class="terminal" style="margin-bottom:0">
+                                    <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — ~/myapp</span></div>
+                                    <div class="tbody">
+                                        <div class="tc">git add .</div>
+                                        <div class="tc">git commit -m "feat: add login page"</div>
+                                        <div class="to">[main 7a4c3e2] feat: add login page</div>
+                                        <div class="tc">git push origin main</div>
+                                        <div class="to">Counting objects: 5, done.</div>
+                                        <div class="tok">✓ Changes pushed to repository</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Pipeline Simulation</div>
+                <div class="panel-body">
+                    <p style="margin-bottom:12px">Click <strong>▶ Run Pipeline</strong> to simulate a full CI/CD pipeline execution:</p>
+                    <button onclick="runPipelineDemo()" style="margin-bottom:24px">▶ Run Pipeline</button>
+                    <div id="pipeline-sim">
+                        <div class="pipeline-stage" id="sim-code"><strong>Code Commit</strong><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+                        <div class="pipeline-stage" id="sim-build"><strong>Build</strong><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+                        <div class="pipeline-stage" id="sim-test"><strong>Unit Tests</strong><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+                        <div class="pipeline-stage" id="sim-security"><strong>Security Scan</strong><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+                        <div class="pipeline-stage" id="sim-staging"><strong>Deploy to Staging</strong><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+                        <div class="pipeline-stage" id="sim-prod"><strong>Deploy to Prod</strong><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+                    </div>
+                    <div id="pipeline-output" style="margin-top:16px"></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#f85149"></div>When Pipeline Fails</div>
+                <div class="panel-body">
+                    <p style="margin-bottom:12px">Click <strong>▶ Run Failed Pipeline</strong> to see how failures are handled:</p>
+                    <button onclick="runFailedPipeline()" style="background:rgba(248,81,73,.15);border-color:rgba(248,81,73,.3);color:#f85149">▶ Run Failed Pipeline</button>
+                    <div id="failed-output" style="margin-top:16px"></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Azure Pipelines YAML Example</div>
+                <div class="panel-body">
+                    <div class="code-block">trigger:<br/>  - main<br/><br/>pool:<br/>  vmImage: 'ubuntu-latest'<br/><br/>stages:<br/>- stage: Build<br/>  jobs:<br/>  - job: BuildJob<br/>    steps:<br/>    - task: UseDotNet@2<br/>      inputs:<br/>        version: '6.x'<br/>    - script: dotnet build<br/>    - script: dotnet test<br/><br/>- stage: Deploy<br/>  jobs:<br/>  - deployment: DeployWeb<br/>    environment:<br/>      name: Production<br/>    strategy:<br/>      runOnce:<br/>        deploy:<br/>          steps:<br/>          - script: dotnet publish -c Release</div>
+                </div>
+            </div>
+
+            <div class="callout info">
+                <span class="ci">ℹ️</span>
+                <span><strong>Pipeline Triggers:</strong> Pipelines can be triggered by code commits, pull requests, scheduled times, or manual execution. Azure Pipelines supports both YAML and UI-based configuration.</span>
+            </div>
+        </div>
+
+        <!-- TAB 3: Azure vs GitHub -->
+        <div id="comparison" class="tab-content">
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Azure DevOps vs GitHub: Feature Comparison</div>
+                <div class="panel-body">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th style="width:30%">Feature Area</th>
+                                <th style="width:35%">Azure DevOps</th>
+                                <th style="width:35%">GitHub</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Planning & Tracking</strong></td>
+                                <td>Azure Boards (Epic/Feature/Story/Task)</td>
+                                <td>GitHub Issues, Projects, Milestones</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Source Control</strong></td>
+                                <td>Azure Repos (Git)</td>
+                                <td>GitHub Repositories</td>
+                            </tr>
+                            <tr>
+                                <td><strong>CI/CD</strong></td>
+                                <td>Azure Pipelines (YAML/UI)</td>
+                                <td>GitHub Actions (Workflow)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Artifacts</strong></td>
+                                <td>Azure Artifacts (NuGet, npm, Maven, Python)</td>
+                                <td>GitHub Packages</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Security</strong></td>
+                                <td>Limited security features</td>
+                                <td>Advanced Security (SAST, Dependabot)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Testing</strong></td>
+                                <td>Azure Test Plans (full ALM)</td>
+                                <td>Manual testing, integration with CI</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Best For</strong></td>
+                                <td>Enterprise, Microsoft stack, complex governance</td>
+                                <td>Open source, modern development, smaller teams</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cost Model</strong></td>
+                                <td>Per user/month (Azure subscribers)</td>
+                                <td>Free public, paid private repos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="two-col">
+                <div class="panel">
+                    <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>Use Azure DevOps When:</div>
+                    <div class="panel-body" style="color:var(--muted);font-size:13px">
+                        <div style="margin-bottom:12px">• Large enterprise teams (100+ developers)</div>
+                        <div style="margin-bottom:12px">• Heavy Microsoft stack (C#, .NET, SQL Server)</div>
+                        <div style="margin-bottom:12px">• Complex ALM requirements (Test Plans, Release Gating)</div>
+                        <div style="margin-bottom:12px">• Strict governance and compliance needs</div>
+                        <div style="margin-bottom:12px">• Multiple project coordination</div>
+                        <div style="margin-bottom:12px">• On-premises or hybrid deployments</div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Use GitHub When:</div>
+                    <div class="panel-body" style="color:var(--muted);font-size:13px">
+                        <div style="margin-bottom:12px">• Open source projects</div>
+                        <div style="margin-bottom:12px">• Distributed teams / community</div>
+                        <div style="margin-bottom:12px">• Fast-moving startups</div>
+                        <div style="margin-bottom:12px">• Advanced security scanning needed</div>
+                        <div style="margin-bottom:12px">• Cloud-native / modern stack</div>
+                        <div style="margin-bottom:12px">• Lower operational overhead desired</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#bc8cff"></div>Azure DevOps + GitHub Integration</div>
+                <div class="panel-body">
+                    <p style="margin-bottom:12px">Many organizations use BOTH together:</p>
+                    <div style="background:var(--surface2);border:1px solid var(--border);padding:12px;border-radius:6px;margin-bottom:16px;color:var(--blue);font-size:12px">
+                        GitHub Repos <span style="color:var(--muted)">(source control)</span><br/>
+                        ↓<br/>
+                        GitHub Actions <span style="color:var(--muted)">(CI/CD)</span><br/>
+                        ↓<br/>
+                        Azure DevOps Boards <span style="color:var(--muted)">(work tracking)</span><br/>
+                        ↓<br/>
+                        Azure DevOps Artifacts <span style="color:var(--muted)">(package storage)</span>
+                    </div>
+                    <p style="color:var(--muted);font-size:12px">This gives you GitHub's best-in-class development experience with Azure DevOps' enterprise work management and artifact storage.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: Shift-Left Testing -->
+        <div id="shift-left" class="tab-content">
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#f85149"></div>Traditional vs Shift-Left Testing</div>
+                <div class="panel-body">
+                    <svg class="loop-svg" viewBox="0 0 700 200">
+                        <text x="10" y="30" fill="#8b949e" font-size="12" font-weight="bold">Traditional: Test Late (Expensive)</text>
+                        <rect x="20" y="50" width="600" height="40" fill="var(--surface2)" stroke="var(--border)" stroke-width="1" rx="4"/>
+                        <text x="35" y="75" fill="var(--text)" font-size="11">Plan</text>
+                        <text x="100" y="75" fill="var(--text)" font-size="11">Code</text>
+                        <text x="180" y="75" fill="var(--text)" font-size="11">Build</text>
+                        <text x="280" y="75" fill="#f85149" font-weight="bold" font-size="11">→ TEST ← (Found bugs too late!)</text>
+                        <text x="580" y="75" fill="var(--text)" font-size="11">Deploy</text>
+
+                        <text x="10" y="130" fill="#3fb950" font-size="12" font-weight="bold">Shift-Left: Test Early (Cost-Effective)</text>
+                        <rect x="20" y="150" width="600" height="40" fill="var(--surface2)" stroke="var(--border)" stroke-width="1" rx="4"/>
+                        <text x="35" y="175" fill="#3fb950" font-weight="bold" font-size="11">Test→</text>
+                        <text x="100" y="175" fill="#3fb950" font-weight="bold" font-size="11">Test→</text>
+                        <text x="180" y="175" fill="#3fb950" font-weight="bold" font-size="11">Test→</text>
+                        <text x="280" y="175" fill="var(--text)" font-size="11">Build</text>
+                        <text x="400" y="175" fill="var(--text)" font-size="11">Deploy</text>
+                        <text x="550" y="175" fill="var(--text)" font-size="11">(Test passed!)</text>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#e3b341"></div>Cost of Fixing Bugs at Each Stage</div>
+                <div class="panel-body">
+                    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px">
+                        <div style="text-align:center">
+                            <div style="background:rgba(88,166,255,.2);height:60px;border-radius:4px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:8px">
+                                <div style="width:30px;height:20px;background:var(--blue);border-radius:2px"></div>
+                            </div>
+                            <div style="font-size:11px;font-weight:bold">Dev</div>
+                            <div style="color:var(--muted);font-size:10px;margin-top:4px">1x Cost</div>
+                        </div>
+                        <div style="text-align:center">
+                            <div style="background:rgba(210,153,34,.2);height:100px;border-radius:4px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:8px">
+                                <div style="width:30px;height:60px;background:var(--yellow);border-radius:2px"></div>
+                            </div>
+                            <div style="font-size:11px;font-weight:bold">Test</div>
+                            <div style="color:var(--muted);font-size:10px;margin-top:4px">5x Cost</div>
+                        </div>
+                        <div style="text-align:center">
+                            <div style="background:rgba(248,81,73,.2);height:140px;border-radius:4px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:8px">
+                                <div style="width:30px;height:100px;background:#f85149;border-radius:2px"></div>
+                            </div>
+                            <div style="font-size:11px;font-weight:bold">UAT</div>
+                            <div style="color:var(--muted);font-size:10px;margin-top:4px">10x Cost</div>
+                        </div>
+                        <div style="text-align:center">
+                            <div style="background:rgba(248,81,73,.2);height:180px;border-radius:4px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:8px">
+                                <div style="width:30px;height:140px;background:#f85149;border-radius:2px"></div>
+                            </div>
+                            <div style="font-size:11px;font-weight:bold">Production</div>
+                            <div style="color:var(--muted);font-size:10px;margin-top:4px">100x Cost</div>
+                        </div>
+                        <div style="text-align:center;display:flex;flex-direction:column;justify-content:flex-end">
+                            <div style="font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.4"><strong>KEY INSIGHT:</strong> A bug found in production costs 100x more to fix than in development!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Testing Pyramid: Types of Tests</div>
+                <div class="panel-body">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                        <div>
+                            <svg viewBox="0 0 300 400" style="width:100%;max-width:250px">
+                                <polygon points="150,20 50,200 250,200" fill="rgba(63,185,80,.15)" stroke="var(--green)" stroke-width="2"/>
+                                <text x="150" y="120" text-anchor="middle" fill="var(--green)" font-weight="bold">Unit Tests</text>
+                                <text x="150" y="140" text-anchor="middle" fill="var(--muted)" font-size="12">Fast, Isolated</text>
+
+                                <polygon points="100,200 200,200 200,300 100,300" fill="rgba(88,166,255,.15)" stroke="var(--blue)" stroke-width="2"/>
+                                <text x="150" y="255" text-anchor="middle" fill="var(--blue)" font-weight="bold">Integration</text>
+                                <text x="150" y="270" text-anchor="middle" fill="var(--muted)" font-size="12">Multiple modules</text>
+
+                                <polygon points="125,300 175,300 175,380 125,380" fill="rgba(248,81,73,.15)" stroke="#f85149" stroke-width="2"/>
+                                <text x="150" y="345" text-anchor="middle" fill="#f85149" font-weight="bold">E2E Tests</text>
+                                <text x="150" y="360" text-anchor="middle" fill="var(--muted)" font-size="12">Slow, Complete</text>
+                            </svg>
+                        </div>
+                        <div>
+                            <div style="margin-bottom:16px">
+                                <div style="font-weight:bold;color:var(--green);margin-bottom:6px">Unit Tests</div>
+                                <div style="color:var(--muted);font-size:12px;margin-bottom:8px">Test individual functions/methods in isolation. Run every commit. 70% of tests.</div>
+                            </div>
+                            <div style="margin-bottom:16px">
+                                <div style="font-weight:bold;color:var(--blue);margin-bottom:6px">Integration Tests</div>
+                                <div style="color:var(--muted);font-size:12px;margin-bottom:8px">Test interactions between modules/services. Run on PR. 20% of tests.</div>
+                            </div>
+                            <div>
+                                <div style="font-weight:bold;color:#f85149;margin-bottom:6px">End-to-End Tests</div>
+                                <div style="color:var(--muted);font-size:12px">Test full user workflows. Run in staging. 10% of tests.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Running Tests at Every Stage</div>
+                <div class="panel-body">
+                    <div class="terminal">
+                        <div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — test phase</span></div>
+                        <div class="tbody">
+                            <div class="tc">npm install && npm run lint</div>
+                            <div class="to">ESLint running... 0 warnings, 0 errors</div>
+                            <div class="tc">npm run test:unit</div>
+                            <div class="to">PASS  src/services/auth.test.js</div>
+                            <div class="to">PASS  src/components/Login.test.js</div>
+                            <div class="to">Tests: 156 passed, 0 failed</div>
+                            <div class="to">Coverage: 92%</div>
+                            <div class="tc">npm run test:integration</div>
+                            <div class="to">PASS  API integration tests</div>
+                            <div class="to">PASS  Database tests</div>
+                            <div class="tok">✓ All tests passed! Ready for deployment</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout success">
+                <span class="ci">✅</span>
+                <span><strong>Shift-Left Benefits:</strong> Catch defects early, reduce rework, improve code quality, enable faster releases, and reduce overall development cost.</span>
+            </div>
+        </div>
+
+        <!-- TAB 5: Exam Tips -->
+        <div id="tips" class="tab-content">
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#d29922"></div>AZ-400 Exam Focus Areas - Module 1</div>
+                <div class="panel-body">
+                    <div class="callout warn">
+                        <span class="ci">⚠️</span>
+                        <span><strong>Exam Weight:</strong> Module 1 covers ~15-20% of AZ-400. Understand these topics deeply for success.</span>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <div style="font-weight:bold;color:var(--blue);margin-bottom:8px">1. DevOps Principles</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            • Understand the 8 practices in the infinity loop<br/>
+                            • Know the culture + process + tools pillars<br/>
+                            • Recognize when DevOps applies vs. traditional approaches<br/>
+                            • Understand metrics: DORA metrics (deployment frequency, lead time, change failure rate, MTTR)
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <div style="font-weight:bold;color:var(--green);margin-bottom:8px">2. CI/CD Pipelines</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            • Stages: Build, Test, Release, Deploy<br/>
+                            • Understand pipeline triggers (push, PR, scheduled)<br/>
+                            • Know how to handle failed stages (retry, rollback)<br/>
+                            • Understand approval gates and staged deployments<br/>
+                            • Be able to read and write basic YAML pipeline
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <div style="font-weight:bold;color:var(--yellow);margin-bottom:8px">3. Shift-Left Testing</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            • Why testing early is cheaper than testing late<br/>
+                            • Unit vs. Integration vs. E2E tests<br/>
+                            • Code coverage thresholds<br/>
+                            • Testing frameworks and tools<br/>
+                            • Automated vs. manual testing trade-offs
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-weight:bold;color:#f85149;margin-bottom:8px">4. Azure vs. GitHub Comparison</div>
+                        <div style="color:var(--muted);font-size:12px">
+                            • Know the five key Azure DevOps services<br/>
+                            • Understand when to use GitHub vs. Azure DevOps<br/>
+                            • Know how to integrate GitHub + Azure DevOps<br/>
+                            • Understand licensing and cost models
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#f85149"></div>Common Exam Traps</div>
+                <div class="panel-body">
+                    <div class="do-dont">
+                        <div class="dont-box">Testing is only important at the end of development. CI/CD is just about deployment speed.</div>
+                        <div class="do-box">Testing throughout the development cycle catches bugs early, reducing overall cost. CI/CD enables continuous improvement and quality.</div>
+                    </div>
+                    <div class="do-dont">
+                        <div class="dont-box">Azure DevOps and GitHub are competing tools — choose one or the other.</div>
+                        <div class="do-box">Many organizations use both together. GitHub for coding, Azure Boards for planning and Azure Artifacts for packages.</div>
+                    </div>
+                    <div class="do-dont">
+                        <div class="dont-box">A 100% passed test rate means your code is production-ready.</div>
+                        <div class="do-box">High test coverage is good, but you need the right kinds of tests (unit, integration, E2E). Also, tests can have bugs.</div>
+                    </div>
+                    <div class="do-dont">
+                        <div class="dont-box">Release and Deployment are the same thing.</div>
+                        <div class="do-box">Release = code is ready to deploy. Deploy = code goes live. Release happens in staging; deployment happens to production.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><div class="ph-dot" style="background:#3fb950"></div>Key Formulas & Metrics to Remember</div>
+                <div class="panel-body">
+                    <div style="background:var(--surface2);border:1px solid var(--border);padding:12px;border-radius:6px;margin-bottom:12px">
+                        <div style="font-weight:bold;color:var(--blue);margin-bottom:6px">Deployment Frequency</div>
+                        <div style="color:var(--muted);font-size:12px">How often code is deployed to production. High = good (enables rapid feedback). Target: daily or more.</div>
+                    </div>
+                    <div style="background:var(--surface2);border:1px solid var(--border);padding:12px;border-radius:6px;margin-bottom:12px">
+                        <div style="font-weight:bold;color:var(--green);margin-bottom:6px">Lead Time</div>
+                        <div style="color:var(--muted);font-size:12px">Time from code commit to production. Lower = better. Target: hours, not days.</div>
+                    </div>
+                    <div style="background:var(--surface2);border:1px solid var(--border);padding:12px;border-radius:6px;margin-bottom:12px">
+                        <div style="font-weight:bold;color:#f85149;margin-bottom:6px">Change Failure Rate</div>
+                        <div style="color:var(--muted);font-size:12px">Percentage of deployments causing incidents. Lower = better. Target: &lt;15%.</div>
+                    </div>
+                    <div style="background:var(--surface2);border:1px solid var(--border);padding:12px;border-radius:6px">
+                        <div style="font-weight:bold;color:#e3b341;margin-bottom:6px">Mean Time to Recovery (MTTR)</div>
+                        <div style="color:var(--muted);font-size:12px">Time to fix a production issue. Lower = better. Target: minutes to hours.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hint-box">
+                <strong>Pro Tip:</strong> The exam loves scenario questions. "A team needs to reduce deployment risk and wants to test code early. Which practice aligns?" Answer: Shift-left testing + automated testing in CI pipeline.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.wf-tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showPractice(practice) {
+            const descriptions = {
+                plan: { title: '1. PLAN', desc: 'Define requirements and roadmap. Use Azure Boards for backlog management, sprint planning, and work items.' },
+                code: { title: '2. CODE', desc: 'Developers write code, use version control (Git). Focus on code quality, peer reviews, clean code principles.' },
+                build: { title: '3. BUILD', desc: 'Compile, package, and build artifacts. Automated build process triggered on every commit using CI pipelines.' },
+                test: { title: '4. TEST', desc: 'Run automated tests (unit, integration, E2E). Shift-left: test continuously, not just at the end.' },
+                release: { title: '5. RELEASE', desc: 'Prepare code for deployment. Create release artifacts, version them, prepare release notes.' },
+                deploy: { title: '6. DEPLOY', desc: 'Move code to production. Can be automated or manual. Progressive deployment (canary, blue-green).' },
+                operate: { title: '7. OPERATE', desc: 'Keep systems running in production. Monitor performance, handle incidents, scale infrastructure.' },
+                monitor: { title: '8. MONITOR', desc: 'Collect metrics, logs, and feedback. Inform next planning cycle. Close the infinity loop.' }
+            };
+
+            const p = descriptions[practice];
+            document.getElementById('practice-detail').innerHTML = `
+                <div class="panel" style="margin:0">
+                    <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>${p.title}</div>
+                    <div class="panel-body">
+                        <p>${p.desc}</p>
+                    </div>
+                </div>
+            `;
+
+            document.querySelectorAll('.step-pill').forEach(pill => pill.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function showPipelineStage(stage) {
+            const stages = {
+                code: {
+                    title: 'Code Stage',
+                    desc: 'Developer commits code to repository',
+                    output: `<div class="terminal" style="margin:0"><div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — ~/myapp</span></div><div class="tbody"><div class="tc">git add .</div><div class="tc">git commit -m "feat: add login page"</div><div class="to">[main 7a4c3e2] feat: add login page</div><div class="tc">git push origin main</div><div class="to">Counting objects: 5, done.</div><div class="tok">✓ Changes pushed to repository</div></div></div>`
+                },
+                build: {
+                    title: 'Build Stage',
+                    desc: 'Compile code and create artifacts',
+                    output: `<div class="terminal" style="margin:0"><div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — build</span></div><div class="tbody"><div class="tc">npm install</div><div class="to">added 456 packages in 12s</div><div class="tc">npm run build</div><div class="to">Successfully compiled 1250 files</div><div class="to">Build size: 2.4MB (gzipped: 640KB)</div><div class="tok">✓ Artifact saved to: dist/myapp-1.2.3.tar.gz</div></div></div>`
+                },
+                test: {
+                    title: 'Test Stage',
+                    desc: 'Run automated unit and integration tests',
+                    output: `<div class="terminal" style="margin:0"><div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — test</span></div><div class="tbody"><div class="tc">npm run test</div><div class="to">PASS  src/auth.test.js (145ms)</div><div class="to">PASS  src/api.test.js (203ms)</div><div class="to">Tests: 156 passed, 0 failed</div><div class="to">Coverage: 92%</div><div class="tok">✓ All tests passed</div></div></div>`
+                },
+                security: {
+                    title: 'Security Scan Stage',
+                    desc: 'Run SAST and dependency scanning',
+                    output: `<div class="terminal" style="margin:0"><div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — security</span></div><div class="tbody"><div class="tc">npm audit</div><div class="to">found 0 vulnerabilities</div><div class="tc">sonar-scanner --project=myapp</div><div class="to">Lines of code: 12,450</div><div class="to">Security hotspots: 0</div><div class="tok">✓ Security checks passed</div></div></div>`
+                },
+                staging: {
+                    title: 'Staging Deploy',
+                    desc: 'Deploy to pre-production environment',
+                    output: `<div class="terminal" style="margin:0"><div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — deploy staging</span></div><div class="tbody"><div class="tc">kubectl apply -f staging-deployment.yaml</div><div class="to">deployment.apps/myapp-staging created</div><div class="to">service/myapp-staging created</div><div class="to">Waiting for 3 replicas...</div><div class="to">All replicas ready (3/3)</div><div class="tok">✓ Staging deployment complete</div><div class="to">URL: https://staging.myapp.com</div></div></div>`
+                },
+                prod: {
+                    title: 'Production Deploy',
+                    desc: 'Deploy to production with approval gate',
+                    output: `<div class="terminal" style="margin:0"><div class="tbar"><div class="td" style="background:#f85149"></div><div class="td" style="background:#e3b341"></div><div class="td" style="background:#3fb950"></div><span class="tlabel">bash — deploy prod</span></div><div class="tbody"><div class="tc">kubectl apply -f prod-deployment.yaml</div><div class="to">deployment.apps/myapp updated</div><div class="to">Rolling update in progress...</div><div class="to">Old replicas: 3 → New replicas: 3</div><div class="to">Health checks: 100%</div><div class="tok">✓ Production deployment successful</div><div class="to">Version: 1.2.3</div></div></div>`
+                }
+            };
+
+            const s = stages[stage];
+            document.getElementById('stage-detail').innerHTML = `
+                <div class="panel" style="margin:0;margin-bottom:16px">
+                    <div class="panel-header"><div class="ph-dot" style="background:#58a6ff"></div>${s.title}</div>
+                    <div class="panel-body">
+                        <p style="margin-bottom:12px"><strong>${s.desc}</strong></p>
+                        ${s.output}
+                    </div>
+                </div>
+            `;
+
+            document.querySelectorAll('.pipeline-stage').forEach(stage => stage.classList.remove('active'));
+            event.target.closest('.pipeline-stage').classList.add('active');
+        }
+
+        async function runPipelineDemo() {
+            const stages = ['sim-code', 'sim-build', 'sim-test', 'sim-security', 'sim-staging', 'sim-prod'];
+            const output = document.getElementById('pipeline-output');
+            output.innerHTML = '';
+
+            for (let i = 0; i < stages.length; i++) {
+                const stageName = stages[i].replace('sim-', '');
+                const element = document.getElementById(stages[i]);
+
+                element.classList.remove('failed');
+                element.classList.add('active');
+
+                for (let j = 0; j <= 100; j += 20) {
+                    element.querySelector('.progress-fill').style.width = j + '%';
+                    await new Promise(r => setTimeout(r, 160));
+                }
+
+                element.querySelector('.progress-fill').style.width = '100%';
+                output.innerHTML += `<div class="tok">✓ ${stageName.charAt(0).toUpperCase() + stageName.slice(1)} completed</div>`;
+
+                if (i < stages.length - 1) {
+                    await new Promise(r => setTimeout(r, 400));
+                }
+            }
+
+            output.innerHTML += `<div class="tok" style="margin-top:12px;font-weight:bold">✓✓✓ Pipeline execution successful! ✓✓✓</div>`;
+        }
+
+        async function runFailedPipeline() {
+            const output = document.getElementById('failed-output');
+            output.innerHTML = '';
+
+            const stages = ['sim-code', 'sim-build', 'sim-test'];
+
+            for (let i = 0; i < stages.length; i++) {
+                const stageName = stages[i].replace('sim-', '');
+                const element = document.getElementById(stages[i]);
+                element.classList.remove('failed');
+                element.classList.add('active');
+
+                for (let j = 0; j <= 100; j += 25) {
+                    element.querySelector('.progress-fill').style.width = j + '%';
+                    await new Promise(r => setTimeout(r, 100));
+                }
+
+                output.innerHTML += `<div class="tok">✓ ${stageName.charAt(0).toUpperCase() + stageName.slice(1)} completed</div>`;
+                await new Promise(r => setTimeout(r, 300));
+            }
+
+            // Fail on security scan
+            const secElement = document.getElementById('sim-security');
+            secElement.classList.add('failed');
+            secElement.classList.remove('active');
+            output.innerHTML += `<div class="terr">✗ Security Scan FAILED - Vulnerability detected</div>`;
+            output.innerHTML += `<div class="terr">  [HIGH] Insecure deserialization in dependency: lodash@4.17.19</div>`;
+            output.innerHTML += `<div class="twarn">→ Fix: npm install lodash@4.17.21</div>`;
+            output.innerHTML += `<div class="twarn">→ Action: Commit fix, re-run pipeline</div>`;
+        }
+    </script>
+</body>
+</html>
