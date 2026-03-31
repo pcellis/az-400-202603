@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Learning Path 3 — Full Recap | AZ-400</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;
+  --green:#3fb950;--blue:#58a6ff;--red:#f85149;--yellow:#d29922;
+  --orange:#e3b341;--purple:#bc8cff;--pink:#f778ba;--teal:#39d353;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%}
+body{background:var(--bg);color:var(--text);font-family:'Cascadia Code','Fira Code',monospace,system-ui;line-height:1.6;font-size:13px}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 24px;display:flex;align-items:center;gap:16px}
+.header h1{font-size:20px;font-weight:bold}
+.header p{color:var(--muted);font-size:12px;margin-top:2px}
+.lp-badge{background:var(--surface2);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:11px;font-weight:bold;white-space:nowrap}
+.container{display:flex;height:calc(100vh - 72px)}
+.tabs{width:210px;background:var(--surface2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.tab-button{padding:11px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;text-align:left;font-size:12px;border-left:3px solid transparent;transition:.15s;font-family:inherit}
+.tab-button:hover{background:var(--surface);color:var(--text)}
+.tab-button.active{background:var(--surface);color:var(--text);border-left-color:var(--blue);font-weight:bold}
+.content{flex:1;overflow-y:auto;padding:24px 28px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+h2{color:var(--blue);font-size:17px;margin:0 0 12px}
+h3{color:var(--text);font-size:14px;margin:16px 0 8px}
+h4{color:var(--muted);font-size:12px;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.05em}
+p{margin-bottom:10px;font-size:13px;color:var(--text)}
+ul,ol{margin:8px 0 10px 18px;font-size:13px}
+li{margin:4px 0}
+strong{color:var(--text)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.panel-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:8px;font-weight:bold;font-size:13px}
+.ph-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.panel-body{padding:14px}
+.terminal{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px;font-family:'Cascadia Code',monospace;font-size:12px}
+.tbar{background:var(--surface2);border-bottom:1px solid var(--border);padding:7px 12px;display:flex;align-items:center;gap:6px}
+.td{width:11px;height:11px;border-radius:50%}
+.tlabel{margin-left:auto;font-size:11px;color:var(--muted)}
+.tbody{padding:12px}
+.tc{color:var(--teal);margin-bottom:4px;white-space:pre-wrap}
+.tc::before{content:"$ ";color:var(--green);font-weight:bold}
+.to{color:var(--muted);margin-bottom:3px;white-space:pre-wrap;font-size:11px}
+.tok{color:var(--green);margin-bottom:4px;font-weight:bold}
+.twarn{color:var(--yellow);margin-bottom:4px}
+.terr{color:var(--red);margin-bottom:4px;font-weight:bold}
+.callout{background:var(--surface);border-left:4px solid var(--blue);padding:12px 14px;margin-bottom:16px;border-radius:4px;display:flex;gap:12px;align-items:flex-start;font-size:13px}
+.callout.warn{border-left-color:var(--yellow);background:rgba(210,153,34,.07)}
+.callout.success{border-left-color:var(--green);background:rgba(63,185,80,.07)}
+.callout.danger{border-left-color:var(--red);background:rgba(248,81,73,.07)}
+.callout.tip{border-left-color:var(--purple);background:rgba(188,140,255,.07)}
+.callout.info{border-left-color:var(--blue);background:rgba(88,166,255,.07)}
+.callout.exam{border-left-color:var(--orange);background:rgba(227,179,65,.08)}
+.ci{font-size:18px;flex-shrink:0;margin-top:1px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--surface2);border:1px solid var(--border);padding:14px;border-radius:6px}
+.card h3{margin-top:0;margin-bottom:6px;font-size:13px}
+.card p{font-size:12px;color:var(--muted);margin-bottom:6px}
+.card ul{font-size:12px;color:var(--muted);margin:4px 0 0 14px}
+table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px}
+table th{background:var(--surface2);color:var(--text);padding:10px;text-align:left;border:1px solid var(--border);font-weight:bold}
+table td{padding:10px;border:1px solid var(--border);background:var(--surface);vertical-align:top}
+table tr:nth-child(even) td{background:var(--surface2)}
+.badge{display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:bold;margin-right:4px}
+.badge.green{background:rgba(63,185,80,.2);color:var(--green)}
+.badge.blue{background:rgba(88,166,255,.2);color:var(--blue)}
+.badge.yellow{background:rgba(210,153,34,.2);color:var(--yellow)}
+.badge.red{background:rgba(248,81,73,.2);color:var(--red)}
+.badge.purple{background:rgba(188,140,255,.2);color:var(--purple)}
+.code-block{background:var(--bg);border:1px solid var(--border);padding:12px;border-radius:6px;overflow-x:auto;margin-bottom:16px;color:var(--blue);font-family:'Cascadia Code',monospace;font-size:12px;white-space:pre}
+.do-dont{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.do-box{border-left:4px solid var(--green);background:var(--surface);padding:12px 14px;border-radius:4px}
+.dont-box{border-left:4px solid var(--red);background:var(--surface);padding:12px 14px;border-radius:4px}
+.do-box::before{content:"✓ DO";color:var(--green);font-weight:bold;display:block;margin-bottom:6px;font-size:12px}
+.dont-box::before{content:"✗ AVOID";color:var(--red);font-weight:bold;display:block;margin-bottom:6px;font-size:12px}
+.do-box ul,.dont-box ul{font-size:12px;margin-left:14px;color:var(--muted)}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.pill{background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.25);color:var(--blue);padding:5px 13px;border-radius:999px;font-size:12px;cursor:pointer;transition:.15s}
+.pill:hover{background:rgba(88,166,255,.22)}
+.pill.active{background:rgba(88,166,255,.28);color:var(--text);border-color:var(--blue)}
+.exam-tips{background:rgba(227,179,65,.07);border:1px solid rgba(227,179,65,.3);border-radius:8px;padding:16px;margin-bottom:16px}
+.exam-tips h3{color:var(--orange);margin-top:0;margin-bottom:10px}
+.exam-tips li{margin-bottom:8px;color:var(--text);font-size:13px}
+.tip-flag{color:var(--orange);margin-right:6px}
+.compare-row{display:flex;gap:0;margin-bottom:8px;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.compare-left{flex:1;padding:10px 14px;background:rgba(88,166,255,.07);border-right:1px solid var(--border)}
+.compare-right{flex:1;padding:10px 14px;background:rgba(63,185,80,.07)}
+.compare-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+
+.recap-section{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;overflow:hidden}
+.recap-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:10px;font-weight:bold;font-size:14px}
+.recap-mod-badge{font-size:11px;font-weight:bold;padding:3px 10px;border-radius:4px}
+.recap-body{padding:16px}
+.key-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.key-card{background:var(--surface2);border-left:3px solid;border-radius:4px;padding:10px 12px}
+.key-card h4{font-size:12px;margin-bottom:6px;margin-top:0}
+.key-card ul{font-size:11px;color:var(--muted);margin-left:12px}
+.key-card li{margin:3px 0}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="lp-badge" style="border-color:#3fb950;color:#3fb950">LP3 · M01–M06</div>
+  <div>
+    <h1 style="color:#3fb950">Learning Path 3 — Full Recap</h1>
+    <p>Release Pipelines · Deployment Patterns · IaC · Templates · Multi-Stage YAML · Health Gates</p>
+  </div>
+</div>
+<div class="container">
+  <div class="tabs">
+<button class="tab-button active" onclick="switchTab(0)">📋 All Modules</button>
+<button class="tab-button" onclick="switchTab(1)">📝 YAML Patterns</button>
+<button class="tab-button" onclick="switchTab(2)">⚖️ Comparisons</button>
+<button class="tab-button" onclick="switchTab(3)">🎯 Exam Flash Cards</button>
+  </div>
+  <div class="content">
+<div class="tab-panel active"><h2>All 6 Modules — Key Concepts</h2>
+<div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#58a6ff">M01</span>Create a Release Pipeline</div><div class="recap-body"><div class="key-grid"><div class="key-card" style="border-color:#58a6ff"><h4 style="color:#58a6ff">CI vs CD</h4><ul><li>CI → artifact. CD → deploys artifact.</li><li>Same artifact through all environments</li><li>Config changes per env, code does not</li></ul></div><div class="key-card" style="border-color:#bc8cff"><h4 style="color:#bc8cff">Deployment Job</h4><ul><li>Use <code>deployment:</code> not <code>job:</code></li><li>Tracks history in Environment</li><li>Supports deployment strategies</li><li>References environment by name</li></ul></div><div class="key-card" style="border-color:#3fb950"><h4 style="color:#3fb950">Artifact Sources</h4><ul><li><code>download: current</code> — this pipeline</li><li><code>resources: pipelines:</code> — another pipeline</li><li>Azure Artifacts feed — versioned packages</li><li>Container registry — images</li></ul></div></div><div class="callout exam"><span class="ci">🎯</span><div>Approvals on the <strong>Environment</strong>, not the stage. Classic = pre/post-deployment conditions on stage. YAML = checks on Environment. Exclusive lock prevents concurrent deployments to same environment.</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#3fb950">M02</span>Release Recommendations</div><div class="recap-body"><table><thead><tr><th>Pattern</th><th>Rollback</th><th>Cost</th><th>Key mechanism</th></tr></thead><tbody><tr><td>Blue-Green</td><td>Instant (slot swap)</td><td>2x infra</td><td>App Service deployment slots</td></tr><tr><td>Canary</td><td>Fast (reduce traffic)</td><td>Slight overhead</td><td>YAML strategy (K8s) or slots + Front Door</td></tr><tr><td>Rolling</td><td>Per-batch</td><td>1x infra</td><td>maxParallel batches across fleet</td></tr><tr><td>Feature Flags</td><td>Instant (toggle)</td><td>None</td><td>Azure App Configuration</td></tr><tr><td>Dark Launch</td><td>Instant (disable)</td><td>Slight overhead</td><td>Traffic mirroring, hidden UX</td></tr></tbody></table>
+<div class="callout exam"><span class="ci">🎯</span><div>YAML canary strategy = Kubernetes environments ONLY. App Service canary = slots + traffic weights (different). Feature flags ≠ A/B testing. A/B = business experiment. Canary = risk reduction.</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#d29922">M03</span>Provision & Test Environments</div><div class="recap-body"><div class="key-grid"><div class="key-card" style="border-color:#d29922"><h4 style="color:#d29922">IaC Tools</h4><ul><li>Bicep — Microsoft recommended, Azure-only</li><li>Terraform — multi-cloud HCL</li><li>ARM JSON — underlying format</li><li>Pulumi — real code (TS/Go/Python)</li></ul></div><div class="key-card" style="border-color:#58a6ff"><h4 style="color:#58a6ff">CD Test Types</h4><ul><li>Smoke — post-deploy, every env</li><li>Integration — dev/staging</li><li>DAST — staging, runtime security</li><li>Performance — staging, scheduled</li></ul></div><div class="key-card" style="border-color:#f85149"><h4 style="color:#f85149">IaC Scanning</h4><ul><li>checkov — Bicep/Terraform/ARM</li><li>tfsec — Terraform focused</li><li>ARM TTK — ARM/Bicep templates</li><li>Run in CI before deploy</li></ul></div></div><div class="callout exam"><span class="ci">🎯</span><div>SAST = static (source code, CI). DAST = dynamic (live app, staging). Bicep compiles to ARM. Azure Monitor gate = Environment check, not a pipeline step.</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#bc8cff">M04</span>Manage Tasks & Templates</div><div class="recap-body"><table><thead><tr><th>Feature</th><th>Task Groups</th><th>YAML Templates</th></tr></thead><tbody><tr><td>Where</td><td>ADO UI</td><td>YAML files in git</td></tr><tr><td>Version controlled</td><td>❌</td><td>✅</td></tr><tr><td>Works with</td><td>Classic only</td><td>YAML only</td></tr><tr><td>Cross-repo</td><td>❌</td><td>✅</td></tr><tr><td>Governance</td><td>❌</td><td>✅ Required template check</td></tr></tbody></table>
+<div class="callout exam"><span class="ci">🎯</span><div>Required template check on Environment = pipeline-as-policy. KV-linked variable group = secrets auto-update on rotation, zero pipeline changes. Template in external repo needs protected resource access grant.</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#e3b341">M05</span>Multi-Stage YAML Strategies</div><div class="recap-body"><table><thead><tr><th>Strategy</th><th>Works with</th><th>maxParallel</th><th>Traffic shifting</th></tr></thead><tbody><tr><td>RunOnce</td><td>Any environment</td><td>N/A</td><td>No</td></tr><tr><td>Rolling</td><td>Multiple VM resources</td><td>✅ Yes</td><td>No — batch by resource</td></tr><tr><td>Canary</td><td>Kubernetes environments only</td><td>N/A</td><td>✅ Yes — by increment</td></tr></tbody></table>
+<p>Lifecycle: <code>preDeploy → deploy → routeTraffic → postRouteTraffic → on:success/failure</code></p>
+<div class="callout exam"><span class="ci">🎯</span><div>Canary = Kubernetes only in YAML. Rolling without multiple VM resources = behaves like RunOnce. <code>dependsOn: []</code> empty = parallel. <code>condition: always()</code> = runs even if upstream failed.</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#f85149">M06</span>Automate Inspection of Health</div><div class="recap-body"><div class="key-grid"><div class="key-card" style="border-color:#f85149"><h4 style="color:#f85149">Health Signals</h4><ul><li>Availability — App Insights ping</li><li>Error rate — requests/failed</li><li>Response time — requests/duration</li><li>Custom metrics — business health</li></ul></div><div class="key-card" style="border-color:#58a6ff"><h4 style="color:#58a6ff">Rollback Speed</h4><ul><li>Feature flag — instant</li><li>Slot swap back — &lt;1 min</li><li>K8s rollout undo — &lt;2 min</li><li>Re-deploy artifact — 5-15 min</li></ul></div><div class="key-card" style="border-color:#3fb950"><h4 style="color:#3fb950">Integrations</h4><ul><li>Service hooks → Teams/Slack/PagerDuty</li><li>Work item #ID links to build</li><li>Deployment tracking on work items</li><li>DORA: Frequency/Lead/CFR/MTTR</li></ul></div></div><div class="callout exam"><span class="ci">🎯</span><div>Azure Monitor gate passes when NO active alerts exist. Fix alert noise before using Monitor as a gate. Service hooks = outbound from ADO to external tools (configured in Project Settings).</div></div>
+</div></div></div>
+<div class="tab-panel"><h2>Essential YAML — LP3</h2>
+<h3>Multi-stage release with approval gate</h3>
+<div class="code-block">stages:
+- stage: Build
+  jobs:
+  - job: BuildApp
+    steps:
+    - task: PublishPipelineArtifact@1
+      inputs: { artifact: drop }
+
+- stage: DeployStaging
+  dependsOn: Build
+  jobs:
+  - deployment: Deploy
+    environment: staging
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+          - task: AzureWebApp@1
+            inputs: { appName: myapp-staging }
+
+- stage: DeployProd
+  dependsOn: DeployStaging
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: Deploy
+    environment: production      # approval check set in ADO UI
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureWebApp@1
+            inputs: { appName: myapp-prod }</div>
+<h3>Blue-Green — App Service slots</h3>
+<div class="code-block">- task: AzureWebApp@1
+  inputs:
+    appName: myapp-prod
+    deployToSlotOrASE: true
+    slotName: staging
+- task: AzureAppServiceManage@0
+  inputs:
+    Action: Swap Slots
+    WebAppName: myapp-prod
+    SourceSlot: staging</div>
+<h3>RunOnce with smoke test + on:failure rollback</h3>
+<div class="code-block">strategy:
+  runOnce:
+    deploy:
+      steps:
+      - task: AzureWebApp@1
+        inputs: { appName: myapp-prod }
+    postRouteTraffic:
+      steps:
+      - script: curl -f https://myapp.azurewebsites.net/health || exit 1
+    on:
+      failure:
+        steps:
+        - task: AzureAppServiceManage@0
+          inputs:
+            Action: Swap Slots
+            WebAppName: myapp-prod
+            SourceSlot: production
+            TargetSlot: staging</div>
+<h3>Canary — Kubernetes</h3>
+<div class="code-block">strategy:
+  canary:
+    increments: [10, 25]
+    deploy:
+      steps:
+      - task: KubernetesManifest@0
+        inputs: { action: deploy, manifests: manifests/ }
+    postRouteTraffic:
+      steps:
+      - script: ./check-error-rate.sh
+    on:
+      failure:
+        steps:
+        - task: KubernetesManifest@0
+          inputs: { action: reject }
+      success:
+        steps:
+        - task: KubernetesManifest@0
+          inputs: { action: promote }</div>
+<h3>Stage DAG — parallel + conditional</h3>
+<div class="code-block">- stage: Build
+- stage: Test
+  dependsOn: Build
+- stage: SecurityScan
+  dependsOn: Build        # parallel with Test
+- stage: DeployStaging
+  dependsOn: [Test, SecurityScan]
+- stage: DeployProd
+  dependsOn: DeployStaging
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'],'refs/heads/main'))
+- stage: Notify
+  dependsOn: DeployProd
+  condition: always()     # run even on failure</div>
+<h3>Bicep IaC deploy</h3>
+<div class="code-block">- task: AzureCLI@2
+  inputs:
+    azureSubscription: myARM
+    scriptType: bash
+    inlineScript: |
+      az deployment group create \
+        --resource-group myRG \
+        --template-file infra/main.bicep \
+        --parameters @infra/params.prod.json</div>
+</div>
+<div class="tab-panel"><h2>Comparisons — LP3</h2>
+<h3>Classic Release vs YAML Multi-Stage</h3>
+<table><thead><tr><th>Feature</th><th>Classic Release</th><th>YAML Multi-Stage</th></tr></thead><tbody><tr><td>Config location</td><td>ADO UI</td><td>Git repo</td></tr><tr><td>Approvals</td><td>Stage pre/post-deployment</td><td>Environment checks</td></tr><tr><td>Deployment strategies</td><td>❌</td><td>✅ RunOnce/Rolling/Canary</td></tr><tr><td>Rollback UI</td><td>Re-run previous release</td><td>Re-run with previous artifact</td></tr><tr><td>Deployment history</td><td>Classic release history</td><td>Environment deployment history</td></tr><tr><td>Exam preference</td><td>Legacy</td><td>Current standard</td></tr></tbody></table>
+<h3>Deployment Pattern Decision Guide</h3>
+<table><thead><tr><th>Requirement</th><th>Pattern</th></tr></thead><tbody><tr><td>Zero-downtime + instant rollback, App Service</td><td>Blue-Green (deployment slots)</td></tr><tr><td>Gradual traffic shift + monitoring, Kubernetes</td><td>Canary (YAML strategy)</td></tr><tr><td>Gradual traffic shift, App Service</td><td>Slots + Front Door traffic weights</td></tr><tr><td>Per-user feature control, no re-deploy</td><td>Feature flags (Azure App Config)</td></tr><tr><td>Test under real production load, invisible to users</td><td>Dark Launch</td></tr><tr><td>Update 500 VMs without full outage</td><td>Rolling strategy</td></tr><tr><td>Simple single-instance deployment</td><td>RunOnce</td></tr></tbody></table>
+<h3>All Environment Check Types</h3>
+<table><thead><tr><th>Check</th><th>What it evaluates</th></tr></thead><tbody><tr><td>Manual approval</td><td>Named user/group clicks Approve</td></tr><tr><td>Azure Monitor alert</td><td>No active alerts in monitoring window</td></tr><tr><td>Azure Function</td><td>Custom logic — pass/fail from function return</td></tr><tr><td>REST API</td><td>HTTP endpoint returns success</td></tr><tr><td>Query Work Items</td><td>ADO Boards query returns 0 items</td></tr><tr><td>Required template</td><td>Pipeline extends approved YAML template</td></tr></tbody></table>
+<h3>Deployment Strategy Comparison</h3>
+<table><thead><tr><th>Phase</th><th>RunOnce</th><th>Rolling</th><th>Canary</th></tr></thead><tbody><tr><td>preDeploy</td><td>Once</td><td>Per batch</td><td>Once</td></tr><tr><td>deploy</td><td>Once</td><td>Per batch</td><td>Per increment</td></tr><tr><td>postRouteTraffic</td><td>Once</td><td>Per batch</td><td>Per increment — health check here</td></tr><tr><td>on:failure</td><td>Once</td><td>Per batch</td><td>Once — reject action</td></tr><tr><td>Needs multiple resources</td><td>❌</td><td>✅</td><td>❌ (K8s handles)</td></tr></tbody></table>
+</div>
+<div class="tab-panel"><h2>🎯 Exam Flash Cards — LP3 All Modules</h2>
+<div class="callout exam"><span class="ci">🎯</span><div>LP3 is one of the heaviest release strategy domains. 14 must-know questions.</div></div>
+<div class="exam-tips"><h3>🎯 Exam Watch — AZ-400</h3><ul><li><span class="tip-flag">🎯</span><strong>Q: Where do you configure human approval in YAML pipelines?</strong> → On the Environment resource in ADO UI — not in the YAML file.</li><li><span class="tip-flag">🎯</span><strong>Q: Blue-Green rollback — mechanism and speed?</strong> → Swap deployment slot back. Instant — old version is still warm.</li><li><span class="tip-flag">🎯</span><strong>Q: YAML canary strategy works with which environment type?</strong> → Kubernetes environments only. App Service canary = different mechanism.</li><li><span class="tip-flag">🎯</span><strong>Q: Feature flags vs canary — key difference?</strong> → Feature flags = user-level toggle, no re-deploy. Canary = infrastructure-level traffic split, reduces deployment risk.</li><li><span class="tip-flag">🎯</span><strong>Q: Feature flags ≠ A/B testing — why?</strong> → Canary/feature flags = risk reduction for new code. A/B = business metric comparison between experiences.</li><li><span class="tip-flag">🎯</span><strong>Q: Microsoft recommended IaC tool for Azure-only?</strong> → Bicep. Compiles to ARM JSON.</li><li><span class="tip-flag">🎯</span><strong>Q: SAST vs DAST — where does each run?</strong> → SAST in CI against source code. DAST in staging against live running app.</li><li><span class="tip-flag">🎯</span><strong>Q: Azure Monitor gate passes when — what condition?</strong> → NO active alerts matching the configured rule in the monitoring window.</li><li><span class="tip-flag">🎯</span><strong>Q: condition: always() on a stage — what does it do?</strong> → Stage runs regardless of upstream success, failure, or cancellation.</li><li><span class="tip-flag">🎯</span><strong>Q: Rolling strategy with 1 VM resource in Environment — behaviour?</strong> → Behaves like RunOnce. Rolling requires multiple resources to actually batch.</li><li><span class="tip-flag">🎯</span><strong>Q: Secret rotates in Key Vault — what pipeline change is needed?</strong> → None. KV-linked variable group fetches fresh values at next pipeline start automatically.</li><li><span class="tip-flag">🎯</span><strong>Q: Required template check — what does it prevent?</strong> → Any pipeline deploying to the protected environment without extending the approved template.</li><li><span class="tip-flag">🎯</span><strong>Q: Fastest rollback requiring zero re-deployment?</strong> → Feature flag disable (instant) or slot swap back (&lt;1 min).</li><li><span class="tip-flag">🎯</span><strong>Q: Commit message #1234 in Azure DevOps — what happens?</strong> → Work item 1234 auto-links to the build. Work item shows deployment status across environments.</li></ul></div>
+</div>
+  </div>
+</div>
+<script>
+function switchTab(n){
+  document.querySelectorAll('.tab-button').forEach((b,i)=>b.classList.toggle('active',i===n));
+  document.querySelectorAll('.tab-panel').forEach((p,i)=>p.classList.toggle('active',i===n));
+}
+</script>
+</body></html>

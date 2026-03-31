@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Learning Path 2 — Full Recap | AZ-400</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;
+  --green:#3fb950;--blue:#58a6ff;--red:#f85149;--yellow:#d29922;
+  --orange:#e3b341;--purple:#bc8cff;--pink:#f778ba;--teal:#39d353;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%}
+body{background:var(--bg);color:var(--text);font-family:'Cascadia Code','Fira Code',monospace,system-ui;line-height:1.6;font-size:13px}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 24px;display:flex;align-items:center;gap:16px}
+.header h1{font-size:20px;font-weight:bold}
+.header p{color:var(--muted);font-size:12px;margin-top:2px}
+.lp-badge{background:var(--surface2);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:11px;font-weight:bold;white-space:nowrap}
+.container{display:flex;height:calc(100vh - 72px)}
+.tabs{width:210px;background:var(--surface2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.tab-button{padding:11px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;text-align:left;font-size:12px;border-left:3px solid transparent;transition:.15s;font-family:inherit}
+.tab-button:hover{background:var(--surface);color:var(--text)}
+.tab-button.active{background:var(--surface);color:var(--text);border-left-color:var(--blue);font-weight:bold}
+.content{flex:1;overflow-y:auto;padding:24px 28px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+h2{color:var(--blue);font-size:17px;margin:0 0 12px}
+h3{color:var(--text);font-size:14px;margin:16px 0 8px}
+h4{color:var(--muted);font-size:12px;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.05em}
+p{margin-bottom:10px;font-size:13px;color:var(--text)}
+ul,ol{margin:8px 0 10px 18px;font-size:13px}
+li{margin:4px 0}
+strong{color:var(--text)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.panel-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:8px;font-weight:bold;font-size:13px}
+.ph-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.panel-body{padding:14px}
+.terminal{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px;font-family:'Cascadia Code',monospace;font-size:12px}
+.tbar{background:var(--surface2);border-bottom:1px solid var(--border);padding:7px 12px;display:flex;align-items:center;gap:6px}
+.td{width:11px;height:11px;border-radius:50%}
+.tlabel{margin-left:auto;font-size:11px;color:var(--muted)}
+.tbody{padding:12px}
+.tc{color:var(--teal);margin-bottom:4px;white-space:pre-wrap}
+.tc::before{content:"$ ";color:var(--green);font-weight:bold}
+.to{color:var(--muted);margin-bottom:3px;white-space:pre-wrap;font-size:11px}
+.tok{color:var(--green);margin-bottom:4px;font-weight:bold}
+.twarn{color:var(--yellow);margin-bottom:4px}
+.terr{color:var(--red);margin-bottom:4px;font-weight:bold}
+.callout{background:var(--surface);border-left:4px solid var(--blue);padding:12px 14px;margin-bottom:16px;border-radius:4px;display:flex;gap:12px;align-items:flex-start;font-size:13px}
+.callout.warn{border-left-color:var(--yellow);background:rgba(210,153,34,.07)}
+.callout.success{border-left-color:var(--green);background:rgba(63,185,80,.07)}
+.callout.danger{border-left-color:var(--red);background:rgba(248,81,73,.07)}
+.callout.tip{border-left-color:var(--purple);background:rgba(188,140,255,.07)}
+.callout.info{border-left-color:var(--blue);background:rgba(88,166,255,.07)}
+.callout.exam{border-left-color:var(--orange);background:rgba(227,179,65,.08)}
+.ci{font-size:18px;flex-shrink:0;margin-top:1px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--surface2);border:1px solid var(--border);padding:14px;border-radius:6px}
+.card h3{margin-top:0;margin-bottom:6px;font-size:13px}
+.card p{font-size:12px;color:var(--muted);margin-bottom:6px}
+.card ul{font-size:12px;color:var(--muted);margin:4px 0 0 14px}
+table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px}
+table th{background:var(--surface2);color:var(--text);padding:10px;text-align:left;border:1px solid var(--border);font-weight:bold}
+table td{padding:10px;border:1px solid var(--border);background:var(--surface);vertical-align:top}
+table tr:nth-child(even) td{background:var(--surface2)}
+.badge{display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:bold;margin-right:4px}
+.badge.green{background:rgba(63,185,80,.2);color:var(--green)}
+.badge.blue{background:rgba(88,166,255,.2);color:var(--blue)}
+.badge.yellow{background:rgba(210,153,34,.2);color:var(--yellow)}
+.badge.red{background:rgba(248,81,73,.2);color:var(--red)}
+.badge.purple{background:rgba(188,140,255,.2);color:var(--purple)}
+.code-block{background:var(--bg);border:1px solid var(--border);padding:12px;border-radius:6px;overflow-x:auto;margin-bottom:16px;color:var(--blue);font-family:'Cascadia Code',monospace;font-size:12px;white-space:pre}
+.do-dont{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.do-box{border-left:4px solid var(--green);background:var(--surface);padding:12px 14px;border-radius:4px}
+.dont-box{border-left:4px solid var(--red);background:var(--surface);padding:12px 14px;border-radius:4px}
+.do-box::before{content:"✓ DO";color:var(--green);font-weight:bold;display:block;margin-bottom:6px;font-size:12px}
+.dont-box::before{content:"✗ AVOID";color:var(--red);font-weight:bold;display:block;margin-bottom:6px;font-size:12px}
+.do-box ul,.dont-box ul{font-size:12px;margin-left:14px;color:var(--muted)}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.pill{background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.25);color:var(--blue);padding:5px 13px;border-radius:999px;font-size:12px;cursor:pointer;transition:.15s}
+.pill:hover{background:rgba(88,166,255,.22)}
+.pill.active{background:rgba(88,166,255,.28);color:var(--text);border-color:var(--blue)}
+.exam-tips{background:rgba(227,179,65,.07);border:1px solid rgba(227,179,65,.3);border-radius:8px;padding:16px;margin-bottom:16px}
+.exam-tips h3{color:var(--orange);margin-top:0;margin-bottom:10px}
+.exam-tips li{margin-bottom:8px;color:var(--text);font-size:13px}
+.tip-flag{color:var(--orange);margin-right:6px}
+.compare-row{display:flex;gap:0;margin-bottom:8px;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.compare-left{flex:1;padding:10px 14px;background:rgba(88,166,255,.07);border-right:1px solid var(--border)}
+.compare-right{flex:1;padding:10px 14px;background:rgba(63,185,80,.07)}
+.compare-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+
+.recap-section{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;overflow:hidden}
+.recap-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:10px;font-weight:bold;font-size:14px}
+.recap-mod-badge{font-size:11px;font-weight:bold;padding:3px 10px;border-radius:4px}
+.recap-body{padding:16px}
+.key-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.key-card{background:var(--surface2);border-left:3px solid;border-radius:4px;padding:10px 12px}
+.key-card h4{font-size:12px;margin-bottom:6px;margin-top:0}
+.key-card ul{font-size:11px;color:var(--muted);margin-left:12px}
+.key-card li{margin:3px 0}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="lp-badge" style="border-color:#58a6ff;color:#58a6ff">LP2 · M01–M08</div>
+  <div>
+    <h1 style="color:#58a6ff">Learning Path 2 — Full Recap</h1>
+    <p>Azure Pipelines · Agents · Concurrency · Pipeline Strategy · YAML Templates · GitHub Actions · CI · Containers</p>
+  </div>
+</div>
+<div class="container">
+  <div class="tabs">
+<button class="tab-button active" onclick="switchTab(0)">📋 All Modules</button>
+<button class="tab-button" onclick="switchTab(1)">📝 YAML Patterns</button>
+<button class="tab-button" onclick="switchTab(2)">⚖️ Comparisons</button>
+<button class="tab-button" onclick="switchTab(3)">🎯 Exam Flash Cards</button>
+  </div>
+  <div class="content">
+<div class="tab-panel active"><h2>All 8 Modules — Key Concepts</h2>
+<div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#58a6ff">M01</span>Azure Pipelines Foundation</div><div class="recap-body"><div class="key-grid"><div class="key-card" style="border-color:#58a6ff"><h4 style="color:#58a6ff">Hierarchy</h4><ul><li>Pipeline → Stage → Job → Step</li><li>Jobs run on a single agent</li><li>Steps share the agent workspace</li><li>Cross-job = publish + download artifact</li></ul></div><div class="key-card" style="border-color:#bc8cff"><h4 style="color:#bc8cff">Triggers</h4><ul><li><code>trigger:</code> — CI push</li><li><code>pr:</code> — pull request</li><li><code>schedules:</code> — cron</li><li><code>resources: pipelines:</code> — pipeline</li><li>Manual — UI only</li></ul></div><div class="key-card" style="border-color:#3fb950"><h4 style="color:#3fb950">Service Connections</h4><ul><li>ARM → Workload Identity (best)</li><li>Docker Registry → images</li><li>GitHub → cross-repo</li><li>Project-scoped by default</li></ul></div></div><div class="callout exam"><span class="ci">🎯</span><div>Default stage condition = <code>succeeded()</code>. Classic pipelines cannot use RunOnce/Rolling/Canary strategies. Approvals live on the <strong>Environment</strong>, not the stage YAML.</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#3fb950">M02</span>Agents & Agent Pools</div><div class="recap-body"><table><thead><tr><th>Agent type</th><th>State</th><th>Network</th><th>Best for</th></tr></thead><tbody><tr><td>Microsoft-hosted</td><td>Fresh per job</td><td>Public only</td><td>Standard builds, zero maintenance</td></tr><tr><td>Self-hosted</td><td>Persistent</td><td>Private VNet ✓</td><td>Custom tools, private resources</td></tr><tr><td>VMSS pool</td><td>Elastic</td><td>Private VNet ✓</td><td>Burst workloads, cost-efficient</td></tr></tbody></table>
+<div class="callout exam"><span class="ci">🎯</span><div>Capabilities (agent) vs Demands (job) — job only runs on matching agents. VMSS = exam favourite for elastic self-hosted. Max Microsoft-hosted job time = 6 hours.</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#d29922">M03</span>Pipelines & Concurrency</div><div class="recap-body"><div class="key-grid"><div class="key-card" style="border-color:#d29922"><h4 style="color:#d29922">Concurrency</h4><ul><li><code>batch: true</code> — collapse rapid commits</li><li><code>lockBehavior: sequential</code> — queue deployments</li><li><code>lockBehavior: cancelRunning</code> — cancel older</li></ul></div><div class="key-card" style="border-color:#58a6ff"><h4 style="color:#58a6ff">Environment Checks</h4><ul><li>Manual approval</li><li>Azure Monitor alert</li><li>Azure Function / REST API</li><li>Query Work Items</li><li>Required template</li></ul></div><div class="key-card" style="border-color:#f85149"><h4 style="color:#f85149">Security</h4><ul><li>Protected resources</li><li>Secret variables (masked ≠ blocked)</li><li>Pipeline permissions</li><li>Retention: 30 days default</li></ul></div></div><div class="callout exam"><span class="ci">🎯</span><div>Approvals on the <strong>Environment</strong>, not the stage. <code>batch: true</code> = one run per batch of queued commits, not "run once".</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#e3b341">M04</span>Pipeline Strategy</div><div class="recap-body"><div class="key-grid"><div class="key-card" style="border-color:#e3b341"><h4 style="color:#e3b341">Matrix Strategy</h4><ul><li>Same job × N variable combos</li><li>Parallel (needs parallel job budget)</li><li><code>maxParallel:</code> caps concurrency</li></ul></div><div class="key-card" style="border-color:#39d353"><h4 style="color:#39d353">Branching</h4><ul><li>Trunk-based = exam preferred</li><li>GitFlow = versioned releases</li><li><code>batch: true</code> for high-frequency</li></ul></div><div class="key-card" style="border-color:#bc8cff"><h4 style="color:#bc8cff">Artifacts & Cache</h4><ul><li>Pipeline artifacts = run-scoped temp</li><li>Azure Artifacts feeds = versioned</li><li>Cache key = hash of lock file</li></ul></div></div><div class="callout exam"><span class="ci">🎯</span><div>Pipeline artifact ≠ Azure Artifacts feed. Matrix + 1 parallel job = sequential runs, not parallel. Cache miss → fresh install → new cache saved.</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#bc8cff">M05</span>YAML Integration & Templates</div><div class="recap-body"><div class="key-grid"><div class="key-card" style="border-color:#bc8cff"><h4 style="color:#bc8cff">Template Types</h4><ul><li>Step / Job / Stage / Variable</li><li>Same repo or external repo</li><li>Required template = governance</li></ul></div><div class="key-card" style="border-color:#58a6ff"><h4 style="color:#58a6ff">Expression Syntax</h4><ul><li><code>${{ }}</code> compile-time</li><li><code>$[ ]</code> runtime expression</li><li><code>$( )</code> macro (runtime)</li></ul></div><div class="key-card" style="border-color:#3fb950"><h4 style="color:#3fb950">Variable Groups</h4><ul><li>Shared across pipelines</li><li>Key Vault-linked = auto-rotation</li><li>Scope to pipelines that need them</li></ul></div></div><div class="callout exam"><span class="ci">🎯</span><div><code>${{ if }}</code> = compile-time conditional — step is absent, not skipped. KV-linked variable group = secrets rotate in KV, zero pipeline changes needed.</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#f778ba">M06</span>GitHub Actions Introduction</div><div class="recap-body"><table><thead><tr><th>ADO Term</th><th>GitHub Actions Term</th></tr></thead><tbody><tr><td>Agent</td><td>Runner</td></tr><tr><td>Task</td><td>Action</td></tr><tr><td>YAML template</td><td>Reusable workflow / composite action</td></tr><tr><td>trigger: / pr:</td><td>on: push / pull_request</td></tr><tr><td>Variable group secret</td><td>Repository / org secret</td></tr><tr><td>ADO Environment</td><td>GitHub Environment</td></tr></tbody></table>
+<div class="callout exam"><span class="ci">🎯</span><div>OIDC = no stored secrets. Federated identity on Azure AD. <code>workflow_dispatch</code> = manual. <code>workflow_call</code> = called by another workflow. Pin third-party actions to commit SHA, not tag.</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#39d353">M07</span>CI with GitHub Actions</div><div class="recap-body"><div class="key-grid"><div class="key-card" style="border-color:#39d353"><h4 style="color:#39d353">CI Job Order</h4><ul><li>checkout → setup toolchain → cache</li><li>→ restore deps → build → test</li><li>→ upload results (always)</li></ul></div><div class="key-card" style="border-color:#58a6ff"><h4 style="color:#58a6ff">Branch Protection</h4><ul><li>Required check = exact job name</li><li>Rename job = silent break</li><li>Set in Repo Settings → Branches</li></ul></div><div class="key-card" style="border-color:#d29922"><h4 style="color:#d29922">Caching</h4><ul><li>setup-node/python/java: built-in</li><li>actions/cache: manual key</li><li>Key = hashFiles(lock file)</li></ul></div></div><div class="callout exam"><span class="ci">🎯</span><div><code>if: success() || failure()</code> on upload step — runs even when tests fail. Required status check name must match job name exactly.</div></div>
+</div></div><div class="recap-section"><div class="recap-header"><span class="recap-mod-badge" style="background:rgba(0,0,0,.2);color:#f85149">M08</span>Container Build Strategy</div><div class="recap-body"><div class="key-grid"><div class="key-card" style="border-color:#f85149"><h4 style="color:#f85149">Multi-Stage Dockerfile</h4><ul><li>Stage 1: FROM sdk — build</li><li>Stage 2: FROM runtime — copy output only</li><li>No SDK in final image</li><li>Smaller, faster, fewer CVEs</li></ul></div><div class="key-card" style="border-color:#e3b341"><h4 style="color:#e3b341">ACR Tiers</h4><ul><li>Basic 10GB — dev/test</li><li>Standard 100GB — production</li><li>Premium 500GB — geo-replication + content trust</li></ul></div><div class="key-card" style="border-color:#39d353"><h4 style="color:#39d353">Best Practices</h4><ul><li>Tag with BuildId or git SHA</li><li>:latest as alias only</li><li>OIDC for ACR auth — no secrets</li><li>Docker service connection in ADO</li></ul></div></div><div class="callout exam"><span class="ci">🎯</span><div>ACR geo-replication + content trust = Premium only. Multi-stage = SDK never reaches production image. Always tag with specific immutable identifier for rollback capability.</div></div>
+</div></div></div>
+<div class="tab-panel"><h2>Essential YAML — LP2</h2>
+<h3>Trigger with path filter</h3>
+<div class="code-block">trigger:
+  branches:
+    include: [main, release/*]
+  paths:
+    include: [src/]
+    exclude: [docs/]
+pr:
+  branches:
+    include: [main]</div>
+<h3>Full stage hierarchy</h3>
+<div class="code-block">stages:
+- stage: Build
+  jobs:
+  - job: BuildApp
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - script: dotnet build
+    - task: PublishPipelineArtifact@1
+      inputs: { artifact: drop }
+- stage: Deploy
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - deployment: DeployProd
+    environment: production
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+          - task: AzureWebApp@1
+            inputs: { appName: myapp }</div>
+<h3>Matrix strategy</h3>
+<div class="code-block">strategy:
+  matrix:
+    linux:
+      os: ubuntu-latest
+    windows:
+      os: windows-latest
+  maxParallel: 2
+pool:
+  vmImage: $(os)</div>
+<h3>Step template + consumption</h3>
+<div class="code-block"># templates/steps/build.yml
+parameters:
+- name: configuration
+  type: string
+  default: Release
+steps:
+- task: DotNetCoreCLI@2
+  inputs:
+    command: build
+    arguments: --configuration ${{ parameters.configuration }}
+
+# azure-pipelines.yml
+steps:
+- template: templates/steps/build.yml
+  parameters:
+    configuration: Release</div>
+<h3>Key Vault-linked variable group</h3>
+<div class="code-block">variables:
+- group: ProductionSecrets   # linked to Azure Key Vault
+- group: SharedConfig</div>
+<h3>GitHub Actions — full CI + OIDC</h3>
+<div class="code-block">on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    - run: npm ci && npm run build && npm test
+    - uses: actions/upload-artifact@v4
+      if: success() || failure()
+      with:
+        name: test-results
+        path: test-results.xml
+    - uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}</div>
+<h3>Multi-stage Dockerfile</h3>
+<div class="code-block">FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY . .
+RUN dotnet publish -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "MyApp.dll"]</div>
+</div>
+<div class="tab-panel"><h2>Comparisons — LP2</h2>
+<h3>Classic Pipeline vs YAML Pipeline</h3>
+<table><thead><tr><th>Feature</th><th>Classic</th><th>YAML</th></tr></thead><tbody><tr><td>Config location</td><td>Azure DevOps UI</td><td>Git repo</td></tr><tr><td>Version controlled</td><td>❌</td><td>✅</td></tr><tr><td>Multi-stage strategies</td><td>❌</td><td>✅ RunOnce/Rolling/Canary</td></tr><tr><td>Template reuse</td><td>Task Groups</td><td>YAML templates</td></tr><tr><td>Exam preference</td><td>Legacy</td><td>Current standard</td></tr></tbody></table>
+<h3>Agent Types</h3>
+<table><thead><tr><th>Scenario</th><th>Agent type</th></tr></thead><tbody><tr><td>Standard build, no special needs</td><td>Microsoft-hosted</td></tr><tr><td>Private network / VNet access required</td><td>Self-hosted</td></tr><tr><td>Custom / licensed tooling</td><td>Self-hosted</td></tr><tr><td>Burst workload, cost-efficient scaling</td><td>VMSS pool</td></tr><tr><td>Cross-platform matrix build</td><td>Microsoft-hosted (multi-OS)</td></tr></tbody></table>
+<h3>Expression Syntax</h3>
+<table><thead><tr><th>Syntax</th><th>Evaluates</th><th>Use for</th></tr></thead><tbody><tr><td><code>${{ }}</code></td><td>Compile time</td><td>Conditional step inclusion, parameter substitution</td></tr><tr><td><code>$[ ]</code></td><td>Runtime</td><td>Stage/job conditions based on runtime values</td></tr><tr><td><code>$( )</code></td><td>Runtime</td><td>Variable values in task inputs</td></tr></tbody></table>
+<h3>GitHub Actions vs Azure Pipelines</h3>
+<table><thead><tr><th>Concept</th><th>Azure Pipelines</th><th>GitHub Actions</th></tr></thead><tbody><tr><td>Compute</td><td>Agent / Agent Pool</td><td>Runner</td></tr><tr><td>Reusable unit</td><td>Task</td><td>Action</td></tr><tr><td>Trigger (push)</td><td><code>trigger:</code></td><td><code>on: push</code></td></tr><tr><td>Trigger (PR)</td><td><code>pr:</code></td><td><code>on: pull_request</code></td></tr><tr><td>Reusable workflow</td><td>YAML template</td><td>Reusable workflow</td></tr><tr><td>Secrets</td><td>Variable groups / KV</td><td>Repo / org secrets</td></tr><tr><td>Azure auth (best)</td><td>Workload identity federation</td><td>OIDC via azure/login@v2</td></tr></tbody></table>
+<h3>ACR Tiers</h3>
+<table><thead><tr><th>Tier</th><th>Storage</th><th>Geo-replication</th><th>Content trust</th></tr></thead><tbody><tr><td>Basic</td><td>10 GB</td><td>❌</td><td>❌</td></tr><tr><td>Standard</td><td>100 GB</td><td>❌</td><td>❌</td></tr><tr><td>Premium</td><td>500 GB</td><td>✅</td><td>✅</td></tr></tbody></table>
+</div>
+<div class="tab-panel"><h2>🎯 Exam Flash Cards — LP2 All Modules</h2>
+<div class="callout exam"><span class="ci">🎯</span><div>Complete LP2 coverage — 16 must-know questions.</div></div>
+<div class="exam-tips"><h3>🎯 Exam Watch — AZ-400</h3><ul><li><span class="tip-flag">🎯</span><strong>Q: Pipeline hierarchy top to bottom?</strong> → Pipeline → Stage → Job → Step.</li><li><span class="tip-flag">🎯</span><strong>Q: Which trigger fires when a PR is opened against main?</strong> → <code>pr:</code></li><li><span class="tip-flag">🎯</span><strong>Q: Classic pipelines support RunOnce/Rolling/Canary?</strong> → No. YAML multi-stage pipelines only.</li><li><span class="tip-flag">🎯</span><strong>Q: Default condition on a stage?</strong> → <code>succeeded()</code> — not always().</li><li><span class="tip-flag">🎯</span><strong>Q: Best ARM service connection auth method?</strong> → Workload Identity Federation (passwordless, short-lived tokens).</li><li><span class="tip-flag">🎯</span><strong>Q: Which agent type is best for burst CI workloads that need zero idle cost?</strong> → VMSS (Azure VM Scale Sets) agent pool.</li><li><span class="tip-flag">🎯</span><strong>Q: Self-hosted agent vs Microsoft-hosted — key difference?</strong> → Self-hosted can reach private VNet resources. Microsoft-hosted cannot.</li><li><span class="tip-flag">🎯</span><strong>Q: batch: true on trigger — what does it do?</strong> → Waits for in-progress run to finish, then starts one run for all queued commits. Reduces parallel job consumption.</li><li><span class="tip-flag">🎯</span><strong>Q: Where do you add a human approval before a production deployment?</strong> → On the Environment resource in Azure DevOps. NOT in the YAML.</li><li><span class="tip-flag">🎯</span><strong>Q: Secret variable is masked in logs — can scripts still read it?</strong> → Yes. Masking is a display feature only.</li><li><span class="tip-flag">🎯</span><strong>Q: Pipeline artifact vs Azure Artifacts feed — which is permanent?</strong> → Azure Artifacts feed. Pipeline artifacts expire with run retention.</li><li><span class="tip-flag">🎯</span><strong>Q: Cache key changes when — what happens?</strong> → Cache miss. Full install runs, new cache is saved.</li><li><span class="tip-flag">🎯</span><strong>Q: compile-time conditional in YAML templates?</strong> → <code>${{ if }}</code>. The step is absent from the run, not skipped.</li><li><span class="tip-flag">🎯</span><strong>Q: OIDC in GitHub Actions — what does it eliminate?</strong> → Stored cloud credentials in GitHub Secrets. Short-lived token per run instead.</li><li><span class="tip-flag">🎯</span><strong>Q: Required status check breaks after renaming CI job — why?</strong> → Required check matches by exact job name string.</li><li><span class="tip-flag">🎯</span><strong>Q: ACR tier for global teams needing geo-replication?</strong> → Premium.</li></ul></div>
+</div>
+  </div>
+</div>
+<script>
+function switchTab(n){
+  document.querySelectorAll('.tab-button').forEach((b,i)=>b.classList.toggle('active',i===n));
+  document.querySelectorAll('.tab-panel').forEach((p,i)=>p.classList.toggle('active',i===n));
+}
+</script>
+</body></html>
